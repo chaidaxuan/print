@@ -127,12 +127,12 @@
     <div class="cost-summary">
       <div class="summary-title">直接计算出来的成本</div>
       <div class="summary-content">
-        <p><strong>【专版联单】报价ID:</strong>{{ generateQuoteId() }}</p>
-        <p><strong>规格：</strong>{{ result.machine_info.printing_size }}</p>
-        <p><strong>材质：</strong>无碳纸</p>
+        <p><strong>【专版联单】报价ID:</strong>{{ quoteId }}</p>
+        <p><strong>规格：</strong>{{ spec?.sizeName || result.machine_info.printing_size }}</p>
+        <p><strong>材质：</strong>{{ spec?.material || '无碳纸' }}</p>
         <p><strong>数量：</strong>{{ result.quantity }}本</p>
-        <p><strong>印刷：</strong>单黑</p>
-        <p><strong>印后工艺：</strong>装订(胶左)</p>
+        <p><strong>印刷：</strong>{{ spec?.colorName || '—' }}</p>
+        <p><strong>印后工艺：</strong>{{ spec?.processing || '无' }}</p>
         <p><strong>计算结果：</strong>{{ formatPrice(result.total_price) }}元 [{{ formatPrice(result.unit_price) }}元/本]</p>
         <p class="promo-text">印刷报价系统：提高报价效率，降低业务成本，展现实力优势，赢得更多订单。</p>
         <div class="summary-actions">
@@ -193,12 +193,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { LiandanQuoteResponse } from '@/types/quote'
+
+interface QuoteSpec {
+  sizeName?: string
+  material?: string
+  colorName?: string
+  processing?: string
+}
 
 interface Props {
   result: LiandanQuoteResponse
   loading?: boolean
+  spec?: QuoteSpec
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -235,13 +243,26 @@ const selectedType = ref('cost')
 const remark = ref('')
 const showCostDetail = ref(false)
 
+// 报价ID：进入结果页时生成一次，避免每次渲染都变化
+const quoteId = ref(Math.floor(Math.random() * 90000000) + 10000000)
+
 const formatPrice = (price: number) => {
   return price.toFixed(2)
 }
 
-const generateQuoteId = () => {
-  return Math.floor(Math.random() * 90000000) + 10000000
-}
+const summaryText = computed(() => {
+  const r = props.result
+  const s = props.spec
+  return [
+    `【专版联单】报价ID:${quoteId.value}`,
+    `规格：${s?.sizeName || r.machine_info.printing_size}`,
+    `材质：${s?.material || '无碳纸'}`,
+    `数量：${r.quantity}本`,
+    `印刷：${s?.colorName || '—'}`,
+    `印后工艺：${s?.processing || '无'}`,
+    `计算结果：${formatPrice(r.total_price)}元 [${formatPrice(r.unit_price)}元/本]`,
+  ].join('\n')
+})
 
 const handleExport = (type: string) => {
   if (type === 'cost') {
@@ -261,8 +282,7 @@ const handleMultiSummary = () => {
 }
 
 const handleCopy = () => {
-  const text = `报价结果：${formatPrice(props.result.total_price)}元 [${formatPrice(props.result.unit_price)}元/本]`
-  navigator.clipboard.writeText(text)
+  navigator.clipboard.writeText(summaryText.value)
   alert('已复制到剪贴板')
 }
 </script>

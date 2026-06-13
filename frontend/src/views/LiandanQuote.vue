@@ -15,6 +15,7 @@
         <QuoteResult
           v-if="quoteResult"
           :result="quoteResult"
+          :spec="quoteSpec"
           :loading="loading"
         />
         <div v-else class="no-result">
@@ -29,8 +30,20 @@
 import { ref } from 'vue'
 import QuoteForm from '@/components/Quote/QuoteForm.vue'
 import QuoteResult from '@/components/Quote/QuoteResult.vue'
-import { calculateLiandanQuote } from '@/api/quote'
-import type { LiandanQuoteRequest, LiandanQuoteResponse } from '@/types/quote'
+import { calculateLiandanQuote, getSizes, getColors } from '@/api/quote'
+import type {
+  LiandanQuoteRequest,
+  LiandanQuoteResponse,
+  ProductSize,
+  PrintingColor
+} from '@/types/quote'
+
+interface QuoteSpec {
+  sizeName?: string
+  material?: string
+  colorName?: string
+  processing?: string
+}
 
 const loading = ref(false)
 const formData = ref<LiandanQuoteRequest>({
@@ -46,12 +59,51 @@ const formData = ref<LiandanQuoteRequest>({
 })
 
 const quoteResult = ref<LiandanQuoteResponse | null>(null)
+const quoteSpec = ref<QuoteSpec>({})
+
+// 基础数据，用于把表单里的 id/code 翻译成可读规格摘要
+const sizes = ref<ProductSize[]>([])
+const colors = ref<PrintingColor[]>([])
+
+// 后道工序代码 → 中文标签
+const processingLabels: Record<string, string> = {
+  binding_left: '装订(胶左)',
+  binding_top: '装订(胶头)',
+  numbering: '打号码',
+  creasing: '压痕压点线',
+  add_cover: '加封面'
+}
+
+const buildSpec = (data: LiandanQuoteRequest): QuoteSpec => {
+  // 规格：自定义尺寸优先，否则取尺寸名
+  let sizeName: string
+  if (data.custom_width && data.custom_height) {
+    sizeName = `自定义 ${data.custom_width}×${data.custom_height}`
+  } else {
+    sizeName = sizes.value.find((s) => s.id === data.size_id)?.name || '—'
+  }
+
+  const colorName = colors.value.find((c) => c.code === data.color_code)?.name || '—'
+
+  const procText =
+    data.post_processing
+      .map((code) => processingLabels[code] || code)
+      .join('、') || '无'
+
+  return {
+    sizeName,
+    material: `${data.gram_weight}克 无碳纸`,
+    colorName,
+    processing: procText
+  }
+}
 
 const handleCalculate = async () => {
   loading.value = true
   try {
     const result = await calculateLiandanQuote(formData.value)
     quoteResult.value = result
+    quoteSpec.value = buildSpec(formData.value)
   } catch (error) {
     console.error('计算报价失败:', error)
     alert('计算报价失败，请稍后重试')
@@ -59,6 +111,16 @@ const handleCalculate = async () => {
     loading.value = false
   }
 }
+
+// 预加载尺寸/颜色，用于规格摘要翻译
+;(async () => {
+  try {
+    sizes.value = await getSizes()
+    colors.value = await getColors()
+  } catch (error) {
+    console.error('加载基础数据失败:', error)
+  }
+})()
 </script>
 
 <style scoped>

@@ -313,12 +313,35 @@ const backSolid = ref(false)
 const frontHighQuality = ref(false)
 const backHighQuality = ref(false)
 const customProfit = ref(false)
+const profitPercent = ref<number | null>(null)
 const calculated = ref(false)
 const bindingChecked = ref(true)
 const postProcessingLocal = ref<string[]>([])
 
 const pagesPerSheet = computed(() => {
   return Math.floor(localData.value.pages_per_book / localData.value.sheet_count)
+})
+
+// 取消自定义尺寸时清空宽高
+watch(customSize, (on) => {
+  if (!on) {
+    localData.value.custom_width = null
+    localData.value.custom_height = null
+  }
+})
+
+// 取消自填利润率时清空
+watch(customProfit, (on) => {
+  if (!on) {
+    profitPercent.value = null
+    localData.value.profit_rate = null
+  }
+})
+
+// 利润率百分比 → 小数同步到提交数据
+watch(profitPercent, (pct) => {
+  localData.value.profit_rate =
+    pct === null || pct === undefined || isNaN(pct) ? null : pct / 100
 })
 
 watch(localData, (newVal) => {
@@ -394,6 +417,17 @@ onMounted(async () => {
 
 .form-input {
   width: 120px;
+}
+
+.form-input.small {
+  width: 70px;
+}
+
+.custom-size-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
 }
 
 .form-select:focus,

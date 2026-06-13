@@ -1,0 +1,53 @@
+# ===== Python (backend) =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# 环境变量 / 密钥（不要提交）
+.env
+.env.*
+!.env.example
+backend/.env
+
+# ===== Node / 前端 =====
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.npm/
+*.local
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===== Playwright / 调试临时产物 =====
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# ===== 根目录下的临时截图（参考图请放到 参考资料/ 目录再决定是否提交）=====
+compare-ref.png
+home-current.png
+local-after.png
+ref-home.png
+ref-viewport.jpeg
+test-read.png
