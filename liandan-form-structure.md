@@ -1,0 +1,399 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - iframe [active] [ref=e8]:
+      - generic [ref=f1e2]:
+        - generic [ref=f1e5]:
+          - heading "报价软件功能演示报价系统" [level=4] [ref=f1e7]
+          - generic [ref=f1e9]:
+            - generic [ref=f1e10]: "1708888"
+            - link "修改密码" [ref=f1e11] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f1e13]: 修改密码
+            - link "安全退出" [ref=f1e14] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f1e16]: 安全退出
+        - generic [ref=f1e20]:
+          - generic [ref=f1e25] [cursor=pointer]: 首页
+          - link "报价" [ref=f1e27] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f1e29]: 报价
+          - link "彩盒" [ref=f1e31] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f1e33]: 彩盒
+          - link "管理" [ref=f1e35] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f1e37]: 管理
+          - link "参数" [ref=f1e39] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f1e41]: 参数
+          - generic [ref=f1e49] [cursor=pointer]: 通知
+        - generic [ref=f1e52]:
+          - list [ref=f1e55]:
+            - listitem [ref=f1e56]:
+              - link "首页" [ref=f1e57] [cursor=pointer]:
+                - /url: javascript:;
+                - text: 首页
+              - link [ref=f1e59] [cursor=pointer]:
+                - /url: javascript:;
+            - listitem [ref=f1e93]:
+              - link "专版联单报价" [ref=f1e94] [cursor=pointer]:
+                - /url: javascript:;
+                - text: 专版联单报价
+              - link [ref=f1e96] [cursor=pointer]:
+                - /url: javascript:;
+          - iframe [active] [ref=f1e99]:
+            - generic [ref=f3e3]:
+              - generic [ref=f3e4]:
+                - generic [ref=f3e5]:
+                  - img [ref=f3e7]
+                  - generic:
+                    - img [ref=f3e9] [cursor=pointer]
+                    - list:
+                      - listitem [ref=f3e10]:
+                        - img [ref=f3e12]
+                    - img [ref=f3e14] [cursor=pointer]
+                - generic [ref=f3e15]:
+                  - table [ref=f3e16]:
+                    - rowgroup [ref=f3e17]:
+                      - row "成品尺寸 32开(210×140)A5 自定义尺寸" [ref=f3e18]:
+                        - rowheader "成品尺寸" [ref=f3e19]
+                        - cell "32开(210×140)A5 自定义尺寸" [ref=f3e20]:
+                          - combobox [ref=f3e21]:
+                            - option "72开(88×128)"
+                            - option "64开(105×145)A6"
+                            - option "48开(210×95)"
+                            - option "32开(210×140)A5" [selected]
+                            - option "16开(210×285)A4"
+                            - option "8开(420×285)A3"
+                            - option "正度64开(93×130)"
+                            - option "正度48开(85×190)"
+                            - option "正度32开(190×130)"
+                            - option "正度16开(260×190)"
+                            - option "正度8开(265×380)"
+                          - generic [ref=f3e22]:
+                            - checkbox "自定义尺寸" [ref=f3e23]
+                            - text: 自定义尺寸
+                      - row "订单数量 100 本" [ref=f3e24]:
+                        - rowheader "订单数量" [ref=f3e25]
+                        - cell "100 本" [ref=f3e26]:
+                          - textbox [ref=f3e27]: "100"
+                          - text: 本
+                      - row "联数 三联 显示每联详情" [ref=f3e28]:
+                        - rowheader "联数" [ref=f3e29]
+                        - cell "三联 显示每联详情" [ref=f3e30]:
+                          - combobox [ref=f3e31]:
+                            - option "二联"
+                            - option "三联" [selected]
+                            - option "四联"
+                            - option "五联"
+                            - option "六联"
+                          - generic [ref=f3e32]:
+                            - checkbox "显示每联详情" [ref=f3e33]
+                            - text: 显示每联详情
+                      - row "每本页数 99 页( 33份)" [ref=f3e34]:
+                        - rowheader "每本页数" [ref=f3e35]
+                        - cell "99 页( 33份)" [ref=f3e36]:
+                          - textbox [ref=f3e37]: "99"
+                          - text: 页( 33份)
+                      - 'row "印刷颜色 正面: 单黑 背面: 正面大实地 背面大实地 正面高品质 背面高品质" [ref=f3e38]':
+                        - rowheader "印刷颜色" [ref=f3e39]
+                        - 'cell "正面: 单黑 背面:" [ref=f3e40]':
+                          - text: "正面:"
+                          - combobox [ref=f3e42]:
+                            - option "空白"
+                            - option "单黑" [selected]
+                            - option "双色"
+                            - option "四色(彩色)"
+                            - option "1专色"
+                            - option "2专色"
+                            - option "3专色"
+                            - option "4专色"
+                            - option "彩色+1专色"
+                            - option "彩色+2专色"
+                            - option "彩色+3专色"
+                            - option "彩色+4专色"
+                          - generic [ref=f3e44]:
+                            - checkbox "背面:" [ref=f3e45]
+                            - text: "背面:"
+                        - cell "正面大实地 背面大实地 正面高品质 背面高品质" [ref=f3e46]:
+                          - generic [ref=f3e47]:
+                            - checkbox "正面大实地" [ref=f3e48]
+                            - text: 正面大实地
+                          - generic [ref=f3e49]:
+                            - checkbox "背面大实地" [ref=f3e50]
+                            - text: 背面大实地
+                          - generic [ref=f3e51]:
+                            - checkbox "正面高品质" [ref=f3e52]
+                            - text: 正面高品质
+                          - generic [ref=f3e53]:
+                            - checkbox "背面高品质" [ref=f3e54]
+                            - text: 背面高品质
+                      - row "纸张克重 50克" [ref=f3e55]:
+                        - rowheader "纸张克重" [ref=f3e56]
+                        - cell "50克" [ref=f3e57]:
+                          - combobox [ref=f3e58]:
+                            - option "50克" [selected]
+                            - option "80克"
+                            - option "108克"
+                      - row "后道工序 我要设计 装订 ( 胶左/ 胶头) 印张交货 加卡纸 打号码 压痕压点线 加封面 印封面 换边联字 打包 其他后工:无" [ref=f3e59]:
+                        - rowheader "后道工序" [ref=f3e60]
+                        - cell "我要设计 装订 ( 胶左/ 胶头) 印张交货 加卡纸 打号码 压痕压点线 加封面 印封面 换边联字 打包 其他后工:无" [ref=f3e61]:
+                          - table [ref=f3e62]:
+                            - rowgroup [ref=f3e63]:
+                              - row "我要设计 装订 ( 胶左/ 胶头) 印张交货" [ref=f3e64]:
+                                - cell "我要设计" [ref=f3e65]:
+                                  - generic [ref=f3e67]:
+                                    - checkbox "我要设计" [ref=f3e68]
+                                    - text: 我要设计
+                                - cell "装订 ( 胶左/ 胶头) 印张交货" [ref=f3e69]:
+                                  - generic [ref=f3e70]:
+                                    - checkbox "装订" [checked] [ref=f3e71]
+                                    - text: 装订
+                                  - generic [ref=f3e72]:
+                                    - text: (
+                                    - generic [ref=f3e73]:
+                                      - checkbox "胶左" [checked] [ref=f3e74]
+                                      - text: 胶左
+                                    - text: /
+                                    - generic [ref=f3e75]:
+                                      - checkbox "胶头" [ref=f3e76]
+                                      - text: 胶头
+                                    - text: )
+                                  - generic [ref=f3e77]:
+                                    - checkbox "印张交货" [ref=f3e78]
+                                    - text: 印张交货
+                              - row "加卡纸 打号码" [ref=f3e79]:
+                                - cell "加卡纸" [ref=f3e80]:
+                                  - generic [ref=f3e81]:
+                                    - checkbox "加卡纸" [ref=f3e82]
+                                    - text: 加卡纸
+                                - cell "打号码" [ref=f3e83]:
+                                  - generic [ref=f3e84]:
+                                    - checkbox "打号码" [ref=f3e85]
+                                    - text: 打号码
+                              - row "压痕压点线 加封面" [ref=f3e86]:
+                                - cell "压痕压点线" [ref=f3e87]:
+                                  - generic [ref=f3e88]:
+                                    - checkbox "压痕压点线" [ref=f3e89]
+                                    - text: 压痕压点线
+                                - cell "加封面" [ref=f3e90]:
+                                  - generic [ref=f3e91]:
+                                    - checkbox "加封面" [ref=f3e92]
+                                    - text: 加封面
+                              - row "印封面 换边联字" [ref=f3e93]:
+                                - cell "印封面" [ref=f3e94]:
+                                  - generic [ref=f3e95]:
+                                    - checkbox "印封面" [ref=f3e96]
+                                    - text: 印封面
+                                - cell "换边联字" [ref=f3e97]:
+                                  - generic [ref=f3e98]:
+                                    - checkbox "换边联字" [ref=f3e99]
+                                    - text: 换边联字
+                              - row "打包" [ref=f3e100]:
+                                - cell "打包" [ref=f3e101]:
+                                  - generic [ref=f3e102]:
+                                    - checkbox "打包" [ref=f3e103]
+                                    - text: 打包
+                              - row "其他后工:无" [ref=f3e104]:
+                                - cell "其他后工:无" [ref=f3e105]:
+                                  - generic [ref=f3e106]: 其他后工:无
+                  - generic [ref=f3e108]:
+                    - list [ref=f3e109]:
+                      - listitem:
+                        - generic [ref=f3e110]: "客户 :"
+                        - textbox "请选择或输入客户" [ref=f3e111]
+                    - list [ref=f3e112]:
+                      - listitem [ref=f3e113]:
+                        - generic [ref=f3e114]:
+                          - text: 产品名
+                          - textbox "请输入产品名" [ref=f3e115]
+                    - list [ref=f3e116]:
+                      - listitem [ref=f3e117]:
+                        - generic [ref=f3e119]: 多数量
+                      - listitem [ref=f3e120]:
+                        - generic [ref=f3e122]:
+                          - checkbox "自填利润率" [ref=f3e123]
+                          - text: 自填利润率
+                      - listitem [ref=f3e124]:
+                        - button "自助报价" [active] [ref=f3e126] [cursor=pointer]
+                      - listitem [ref=f3e128]: 计算完成！
+                      - listitem
+                      - listitem [ref=f3e127]:
+                        - button "ERP下单" [ref=f3e130]
+              - table [ref=f3e131]:
+                - rowgroup [ref=f3e132]:
+                  - row "人民币 优惠价 美金USD 菲律宾比索PHP 欧元EUR 港元HKD 日元JPY 台币TWD 英镑GBP 加拿大元(CAD) 越南盾VND 泰国铢THB 印尼卢比盾IDR 成本价 现金客户 现金开票客户 30天月结客户 中介客户 月结开票客户 成本明细 报价单 合同单 生产流程单 数量 单价（元） 总价（元） 备注 100 6.340 634.00 200 4.715 943.00 300 4.240 1272.00 400 3.813 1525.20 500 3.662 1831.00 备注 客户公司+产品名+备注 总价 634 保存 可送货区域： 质量宣言： 交货周期： 1-2日 优惠活动1： 结款方式： 加我好友： 微信付款 手机端报价 联系电话： 19200444307 联系人： 朱先生 联系ＱＱ： 联系我们 地 址： 广东佛山 联系方式 报价软件功能演示报价系统 直接计算出来的成本 【专版联单】报价ID:24692987 规格：32开(210×140)A5 材质：50克 数量：99页/本、100本 印刷：单黑 印后工艺：装订(胶左) 计算结果：634元 [6.34元/本] 优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】 多数量汇总 点击复制" [ref=f3e133]:
+                    - cell "人民币 优惠价 美金USD 菲律宾比索PHP 欧元EUR 港元HKD 日元JPY 台币TWD 英镑GBP 加拿大元(CAD) 越南盾VND 泰国铢THB 印尼卢比盾IDR 成本价 现金客户 现金开票客户 30天月结客户 中介客户 月结开票客户 成本明细 报价单 合同单 生产流程单 数量 单价（元） 总价（元） 备注 100 6.340 634.00 200 4.715 943.00 300 4.240 1272.00 400 3.813 1525.20 500 3.662 1831.00 备注 客户公司+产品名+备注 总价 634 保存 可送货区域： 质量宣言： 交货周期： 1-2日 优惠活动1： 结款方式： 加我好友： 微信付款 手机端报价 联系电话： 19200444307 联系人： 朱先生 联系ＱＱ： 联系我们 地 址： 广东佛山 联系方式 报价软件功能演示报价系统 直接计算出来的成本 【专版联单】报价ID:24692987 规格：32开(210×140)A5 材质：50克 数量：99页/本、100本 印刷：单黑 印后工艺：装订(胶左) 计算结果：634元 [6.34元/本] 优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】 多数量汇总 点击复制" [ref=f3e134]:
+                      - generic [ref=f3e136]:
+                        - button "人民币" [ref=f3e137] [cursor=pointer]
+                        - button "优惠价" [ref=f3e138] [cursor=pointer]
+                        - button "美金USD" [ref=f3e139] [cursor=pointer]
+                        - button "菲律宾比索PHP" [ref=f3e140] [cursor=pointer]
+                        - button "欧元EUR" [ref=f3e141] [cursor=pointer]
+                        - button "港元HKD" [ref=f3e142] [cursor=pointer]
+                        - button "日元JPY" [ref=f3e143] [cursor=pointer]
+                        - button "台币TWD" [ref=f3e144] [cursor=pointer]
+                        - button "英镑GBP" [ref=f3e145] [cursor=pointer]
+                        - button "加拿大元(CAD)" [ref=f3e146] [cursor=pointer]
+                        - button "越南盾VND" [ref=f3e147] [cursor=pointer]
+                        - button "泰国铢THB" [ref=f3e148] [cursor=pointer]
+                        - button "印尼卢比盾IDR" [ref=f3e149] [cursor=pointer]
+                      - list [ref=f3e151]:
+                        - listitem [ref=f3e152]:
+                          - emphasis [ref=f3e154] [cursor=pointer]:
+                            - generic [ref=f3e155]: 成本价
+                        - listitem [ref=f3e156]:
+                          - emphasis [ref=f3e158] [cursor=pointer]:
+                            - generic [ref=f3e159]: 现金客户
+                        - listitem [ref=f3e160]:
+                          - emphasis [ref=f3e162] [cursor=pointer]:
+                            - generic [ref=f3e163]: 现金开票客户
+                        - listitem [ref=f3e164]:
+                          - emphasis [ref=f3e166] [cursor=pointer]:
+                            - generic [ref=f3e167]: 30天月结客户
+                        - listitem [ref=f3e168]:
+                          - emphasis [ref=f3e170] [cursor=pointer]:
+                            - generic [ref=f3e171]: 中介客户
+                        - listitem [ref=f3e172]:
+                          - emphasis [ref=f3e174] [cursor=pointer]:
+                            - generic [ref=f3e175]: 月结开票客户
+                        - listitem [ref=f3e176] [cursor=pointer]:
+                          - generic [ref=f3e177]: 成本明细
+                        - listitem [ref=f3e178] [cursor=pointer]:
+                          - generic [ref=f3e179]: 报价单
+                        - listitem [ref=f3e180] [cursor=pointer]:
+                          - generic [ref=f3e181]: 合同单
+                        - listitem [ref=f3e182] [cursor=pointer]:
+                          - generic [ref=f3e183]: 生产流程单
+                      - table [ref=f3e185]:
+                        - rowgroup [ref=f3e186]:
+                          - row "数量 单价（元） 总价（元） 备注 100 6.340 634.00 200 4.715 943.00 300 4.240 1272.00 400 3.813 1525.20 500 3.662 1831.00 备注 客户公司+产品名+备注 总价 634 保存 可送货区域： 质量宣言： 交货周期： 1-2日 优惠活动1： 结款方式： 加我好友： 微信付款 手机端报价 联系电话： 19200444307 联系人： 朱先生 联系ＱＱ： 联系我们 地 址： 广东佛山 联系方式 报价软件功能演示报价系统" [ref=f3e187]:
+                            - cell "数量 单价（元） 总价（元） 备注 100 6.340 634.00 200 4.715 943.00 300 4.240 1272.00 400 3.813 1525.20 500 3.662 1831.00 备注 客户公司+产品名+备注 总价 634 保存 可送货区域： 质量宣言： 交货周期： 1-2日 优惠活动1： 结款方式： 加我好友： 微信付款 手机端报价 联系电话： 19200444307 联系人： 朱先生 联系ＱＱ： 联系我们 地 址： 广东佛山" [ref=f3e188]:
+                              - generic [ref=f3e189]:
+                                - table [ref=f3e190]:
+                                  - rowgroup [ref=f3e191]:
+                                    - row "数量 单价（元） 总价（元） 备注" [ref=f3e192]:
+                                      - cell "数量" [ref=f3e193]:
+                                        - strong [ref=f3e194]: 数量
+                                      - cell "单价（元）" [ref=f3e195]:
+                                        - strong [ref=f3e196]: 单价（元）
+                                      - cell "总价（元）" [ref=f3e197]:
+                                        - strong [ref=f3e198]: 总价（元）
+                                      - cell "备注" [ref=f3e199]:
+                                        - strong [ref=f3e200]: 备注
+                                    - row "100 6.340 634.00" [ref=f3e201]:
+                                      - cell "100" [ref=f3e202]
+                                      - cell "6.340" [ref=f3e203]
+                                      - cell "634.00" [ref=f3e204]
+                                      - cell [ref=f3e205]
+                                    - row "200 4.715 943.00" [ref=f3e206]:
+                                      - cell "200" [ref=f3e207]
+                                      - cell "4.715" [ref=f3e208]
+                                      - cell "943.00" [ref=f3e209]
+                                      - cell [ref=f3e210]
+                                    - row "300 4.240 1272.00" [ref=f3e211]:
+                                      - cell "300" [ref=f3e212]
+                                      - cell "4.240" [ref=f3e213]
+                                      - cell "1272.00" [ref=f3e214]
+                                      - cell [ref=f3e215]
+                                    - row "400 3.813 1525.20" [ref=f3e216]:
+                                      - cell "400" [ref=f3e217]
+                                      - cell "3.813" [ref=f3e218]
+                                      - cell "1525.20" [ref=f3e219]
+                                      - cell [ref=f3e220]
+                                    - row "500 3.662 1831.00" [ref=f3e221]:
+                                      - cell "500" [ref=f3e222]
+                                      - cell "3.662" [ref=f3e223]
+                                      - cell "1831.00" [ref=f3e224]
+                                      - cell [ref=f3e225]
+                                    - row "备注 客户公司+产品名+备注 总价 634 保存" [ref=f3e226]:
+                                      - cell "备注 客户公司+产品名+备注 总价 634 保存" [ref=f3e227]:
+                                        - generic [ref=f3e228]:
+                                          - text: 备注
+                                          - textbox "备注" [ref=f3e229]: 客户公司+产品名+备注
+                                        - generic [ref=f3e230]:
+                                          - text: 总价
+                                          - textbox "总价" [ref=f3e231]: "634"
+                                        - button "保存" [ref=f3e232] [cursor=pointer]
+                                - table [ref=f3e233]:
+                                  - rowgroup [ref=f3e234]:
+                                    - row "可送货区域： 质量宣言：" [ref=f3e235]:
+                                      - cell "可送货区域：" [ref=f3e236]
+                                      - cell [ref=f3e237]
+                                      - cell "质量宣言：" [ref=f3e238]
+                                      - cell [ref=f3e239]
+                                    - row "交货周期： 1-2日 优惠活动1：" [ref=f3e240]:
+                                      - cell "交货周期：" [ref=f3e241]
+                                      - cell "1-2日" [ref=f3e242]
+                                      - cell "优惠活动1：" [ref=f3e243]
+                                      - cell [ref=f3e244]
+                                    - row "结款方式： 加我好友： 微信付款 手机端报价" [ref=f3e245]:
+                                      - cell "结款方式：" [ref=f3e246]
+                                      - cell [ref=f3e247]
+                                      - cell "加我好友：" [ref=f3e248]
+                                      - cell "微信付款 手机端报价" [ref=f3e249]:
+                                        - button "微信付款" [ref=f3e250] [cursor=pointer]
+                                        - button "手机端报价" [ref=f3e251] [cursor=pointer]
+                                - table [ref=f3e252]:
+                                  - rowgroup [ref=f3e253]:
+                                    - row "联系电话： 19200444307 联系人： 朱先生" [ref=f3e254]:
+                                      - cell "联系电话：" [ref=f3e255]
+                                      - cell "19200444307" [ref=f3e256]
+                                      - cell "联系人：" [ref=f3e257]
+                                      - cell "朱先生" [ref=f3e258]
+                                    - row "联系ＱＱ： 联系我们 地 址： 广东佛山" [ref=f3e259]:
+                                      - cell "联系ＱＱ：" [ref=f3e260]
+                                      - cell "联系我们" [ref=f3e261]:
+                                        - link "联系我们" [ref=f3e262] [cursor=pointer]:
+                                          - /url: tencent://message/?uin=1123388668
+                                          - img "联系我们" [ref=f3e263]
+                                      - cell "地 址：" [ref=f3e264]
+                                      - cell "广东佛山" [ref=f3e265]
+                            - cell "联系方式 报价软件功能演示报价系统" [ref=f3e266]:
+                              - img "联系方式" [ref=f3e267]
+                              - link "报价软件功能演示报价系统" [ref=f3e268] [cursor=pointer]:
+                                - /url: javascript:getCompanyInfo(265,0);
+                          - row "直接计算出来的成本" [ref=f3e269]:
+                            - cell "直接计算出来的成本" [ref=f3e270]: 直接计算出来的成本
+                          - row "【专版联单】报价ID:24692987 规格：32开(210×140)A5 材质：50克 数量：99页/本、100本 印刷：单黑 印后工艺：装订(胶左) 计算结果：634元 [6.34元/本] 优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】 多数量汇总 点击复制" [ref=f3e271]:
+                            - cell "【专版联单】报价ID:24692987 规格：32开(210×140)A5 材质：50克 数量：99页/本、100本 印刷：单黑 印后工艺：装订(胶左) 计算结果：634元 [6.34元/本] 优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】 多数量汇总 点击复制" [ref=f3e272]:
+                              - generic [ref=f3e274]:
+                                - text: 【专版联单】报价ID:24692987
+                                - text: 规格：32开(210×140)A5
+                                - text: 材质：50克
+                                - text: 数量：99页/本、100本
+                                - text: 印刷：单黑
+                                - text: 印后工艺：装订(胶左)
+                                - text: 计算结果：634元 [6.34元/本]
+                                - text: 优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】
+                                - link "多数量汇总" [ref=f3e275] [cursor=pointer]:
+                                  - /url: javascript:showMultiSummary("【专版联单】报价ID:24692987<br>规格：32开(210×140)A5<br>材质：50克<br>印刷：单黑<br>印后工艺：装订(胶左)<br>计算结果：<br>数量：100本   价格：634元 [6.340元/本]<br>数量：200本   价格：943元 [4.715元/本]<br>数量：300本   价格：1272元 [4.240元/本]<br>数量：400本   价格：1525.2元 [3.813元/本]<br>数量：500本   价格：1831元 [3.662元/本]<br>优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】<br>")
+                                - link "点击复制" [ref=f3e276] [cursor=pointer]:
+                                  - /url: javascript:copySummary("【专版联单】报价ID:24692987<br>规格：32开(210×140)A5<br>材质：50克<br>数量：99页/本、100本<br>印刷：单黑<br>印后工艺：装订(胶左)<br>计算结果：634元 [6.34元/本]<br>优效印刷报价软件：提高报价效率，降低业务成本，展现实力优势，赢得更多订单，让您的事业如虎添翼，更加辉煌灿烂。【了解报价软件请联系19200444307朱先生】")
+              - listitem
+    - generic [ref=e13]: 给您了解功能演示用的软件，内设置的报价参数和您的实际数据不同，所以计算结果和你手算的会有不同是正常的
+    - link "点击联系客服" [ref=e16] [cursor=pointer]:
+      - /url: javascript:;
+      - generic [ref=e17]: 点击联系客服
+  - paragraph [ref=e23]:
+    - generic [ref=e25]: 公司名称：佛山优效软件科技有限公司 地址：广东金融高新区（佛山市南海区桂澜北路28号 ） 电话：0757-86772109
+    - link "粤ICP备17073568号" [ref=e27] [cursor=pointer]:
+      - /url: http://beian.miit.gov.cn/#/Integrated
+      - generic [ref=e28]: 粤ICP备17073568号
+  - generic [ref=e32]:
+    - img [ref=e42]
+    - paragraph [ref=e45]:
+      - strong [ref=e48]: 印刷业务BMS系统
+    - list [ref=e52]:
+      - listitem [ref=e53]:
+        - link "首页" [ref=e54] [cursor=pointer]:
+          - /url: https://www.yinshuabaojia.com
+      - listitem [ref=e55]:
+        - link "印刷商城演示" [ref=e56] [cursor=pointer]:
+          - /url: https://www.yinshuabaojia.com/httpsorderyinshuabaojiacom
+      - listitem [ref=e57]:
+        - link "关于优效" [ref=e58] [cursor=pointer]:
+          - /url: https://www.yinshuabaojia.com/page88
+      - listitem [ref=e59]:
+        - link "BMS-业务管理" [ref=e60] [cursor=pointer]:
+          - /url: https://www.yinshuabaojia.com/page168

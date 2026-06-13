@@ -1,0 +1,224 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - heading "报价软件功能演示报价系统" [level=4] [ref=e7]
+    - generic [ref=e9]:
+      - generic [ref=e10]: "1708888"
+      - link "修改密码" [ref=e11] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e13]: 修改密码
+      - link "安全退出" [ref=e14] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e16]: 安全退出
+  - generic [ref=e20]:
+    - generic [ref=e25] [cursor=pointer]: 首页
+    - link "报价" [ref=e27] [cursor=pointer]:
+      - /url: "#"
+      - generic [ref=e29]: 报价
+    - link "彩盒" [ref=e31] [cursor=pointer]:
+      - /url: "#"
+      - generic [ref=e33]: 彩盒
+    - link "管理" [ref=e35] [cursor=pointer]:
+      - /url: "#"
+      - generic [ref=e37]: 管理
+    - link "参数" [ref=e39] [cursor=pointer]:
+      - /url: "#"
+      - generic [ref=e41]: 参数
+    - generic [ref=e49] [cursor=pointer]: 通知
+  - generic [ref=e52]:
+    - list [ref=e55]:
+      - listitem [ref=e56]:
+        - link "首页" [ref=e57] [cursor=pointer]:
+          - /url: javascript:;
+          - text: 首页
+        - link [ref=e59] [cursor=pointer]:
+          - /url: javascript:;
+    - iframe [ref=e63]:
+      - generic [ref=f3e3]:
+        - list:
+          - listitem [ref=f3e4]:
+            - link "表格便笺" [ref=f3e5] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e6]
+              - paragraph [ref=f3e7]: 表格便笺
+          - listitem [ref=f3e8]:
+            - link "彩盒彩箱" [ref=f3e9] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e10]
+              - paragraph [ref=f3e11]: 彩盒彩箱
+          - listitem [ref=f3e12]:
+            - link "专版不干胶" [ref=f3e13] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e14]
+              - paragraph [ref=f3e15]: 专版不干胶
+          - listitem [ref=f3e16]:
+            - link "纸盒纸箱" [ref=f3e17] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e18]
+              - paragraph [ref=f3e19]: 纸盒纸箱
+          - listitem [ref=f3e20]:
+            - link "纸袋" [ref=f3e21] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e22]
+              - paragraph [ref=f3e23]: 纸袋
+          - listitem [ref=f3e24]:
+            - link "特价不干胶" [ref=f3e25] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e26]
+              - paragraph [ref=f3e27]: 特价不干胶
+          - listitem [ref=f3e28]:
+            - link "精品盒" [ref=f3e29] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e30]
+              - paragraph [ref=f3e31]: 精品盒
+          - listitem [ref=f3e32]:
+            - link "特价精品盒" [ref=f3e33] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e34]
+              - paragraph [ref=f3e35]: 特价精品盒
+          - listitem [ref=f3e36]:
+            - link "专版画册" [ref=f3e37] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e38]
+              - paragraph [ref=f3e39]: 专版画册
+          - listitem [ref=f3e40]:
+            - link "特价单张" [ref=f3e41] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e42]
+              - paragraph [ref=f3e43]: 特价单张
+          - listitem [ref=f3e44]:
+            - link "特价画册" [ref=f3e45] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e46]
+              - paragraph [ref=f3e47]: 特价画册
+          - listitem [ref=f3e48]:
+            - link "信封" [ref=f3e49] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e50]
+              - paragraph [ref=f3e51]: 信封
+          - listitem [ref=f3e52]:
+            - link "手提袋" [ref=f3e53] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e54]
+              - paragraph [ref=f3e55]: 手提袋
+          - listitem [ref=f3e56]:
+            - link "专版单页" [ref=f3e57] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e58]
+              - paragraph [ref=f3e59]: 专版单页
+          - listitem [ref=f3e60]:
+            - link "彩卡吊牌" [ref=f3e61] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e62]
+              - paragraph [ref=f3e63]: 彩卡吊牌
+          - listitem [ref=f3e64]:
+            - link "封套" [ref=f3e65] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e66]
+              - paragraph [ref=f3e67]: 封套
+          - listitem [ref=f3e68]:
+            - link "游戏卡牌" [ref=f3e69] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e70]
+              - paragraph [ref=f3e71]: 游戏卡牌
+          - listitem [ref=f3e72]:
+            - link "小批量彩盒" [ref=f3e73] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e74]
+              - paragraph [ref=f3e75]: 小批量彩盒
+          - listitem [ref=f3e76]:
+            - link "环保纸袋" [ref=f3e77] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e78]
+              - paragraph [ref=f3e79]: 环保纸袋
+          - listitem [ref=f3e80]:
+            - link "特价信封" [ref=f3e81] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e82]
+              - paragraph [ref=f3e83]: 特价信封
+          - listitem [ref=f3e84]:
+            - link "数码打印" [ref=f3e85] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e86]
+              - paragraph [ref=f3e87]: 数码打印
+          - listitem [ref=f3e88]:
+            - link "软包装" [ref=f3e89] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e90]
+              - paragraph [ref=f3e91]: 软包装
+          - listitem [ref=f3e92]:
+            - link "无纺布袋" [ref=f3e93] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e94]
+              - paragraph [ref=f3e95]: 无纺布袋
+          - listitem [ref=f3e96]:
+            - link "PVC卡" [ref=f3e97] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e98]
+              - paragraph [ref=f3e99]: PVC卡
+          - listitem [ref=f3e100]:
+            - link "特价纸抽盒" [ref=f3e101] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e102]
+              - paragraph [ref=f3e103]: 特价纸抽盒
+          - listitem [ref=f3e104]:
+            - link "特价环保纸袋" [ref=f3e105] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e106]
+              - paragraph [ref=f3e107]: 特价环保纸袋
+          - listitem [ref=f3e108]:
+            - link "无碳联单" [ref=f3e109] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e110]
+              - paragraph [ref=f3e111]: 无碳联单
+          - listitem [ref=f3e112]:
+            - link "特价联单" [ref=f3e113] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e114]
+              - paragraph [ref=f3e115]: 特价联单
+          - listitem [ref=f3e116]:
+            - link "对联" [ref=f3e117] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e118]
+              - paragraph [ref=f3e119]: 对联
+          - listitem [ref=f3e120]:
+            - link "笔记本" [ref=f3e121] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e122]
+              - paragraph [ref=f3e123]: 笔记本
+          - listitem [ref=f3e124]:
+            - link "防伪标" [ref=f3e125] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e126]
+              - paragraph [ref=f3e127]: 防伪标
+          - listitem [ref=f3e128]:
+            - link "专业喷绘" [ref=f3e129] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e130]
+              - paragraph [ref=f3e131]: 专业喷绘
+          - listitem [ref=f3e132]:
+            - link "专业不干胶" [ref=f3e133] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e134]
+              - paragraph [ref=f3e135]: 专业不干胶
+          - listitem [ref=f3e136]:
+            - link "食品袋" [ref=f3e137] [cursor=pointer]:
+              - /url: javascript:void(0);
+              - img [ref=f3e138]
+              - paragraph [ref=f3e139]: 食品袋
+        - img [ref=f3e140]
+  - generic [ref=e64]:
+    - paragraph [ref=e65]:
+      - generic [ref=e72]: 软件更新： 2026-6-1
+    - paragraph [ref=e73]
+    - paragraph [ref=e74]:
+      - generic [ref=e82]:
+        - text: 1、彩盒：粘盒，分类增加竖纹坑盒，横纹坑盒（不同粘盒费设置）
+        - text: 2、精品盒，手工一口价，增加自填一口价时也使用最低收费选项
+        - text: 3、彩盒，选择刀版尺寸时，成品尺寸默认为零
+        - text: 4、彩盒，增加二号展示盒
+    - paragraph [ref=e83]:
+      - generic [ref=e91]:
+        - text: 彩盒，增加侧粘口扣底盒二
+        - text: 5、纸张克重，增加优先选择选项
+        - text: 6、专业不干胶，自定义后工，增加自填数量
+    - paragraph [ref=e92]

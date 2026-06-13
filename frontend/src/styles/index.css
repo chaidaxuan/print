@@ -1,0 +1,162 @@
+:root {
+  /* 主色调 —— 经典企业蓝 */
+  --primary-color: #1a8bc4;
+  --primary-hover: #1577a8;
+  --primary-active: #11648c;
+
+  /* 中性色 */
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-disabled: #999999;
+  --border-color: #cfcfcf;
+  --bg-gray: #f2f2f2;
+  --bg-white: #ffffff;
+
+  /* 功能色 */
+  --success-color: #5cae5c;
+  --success-hover: #4a9a4a;
+  --warning-color: #f0ad4e;
+  --danger-color: #d9534f;
+
+  /* 顶栏 / 导航 */
+  --header-bg: linear-gradient(180deg, #3a78b5 0%, #2f689f 100%);
+  --header-text: #ffffff;
+  --nav-bg: #767676;
+  --nav-bg-hover: #5f5f5f;
+  --nav-active-bg: #1a8bc4;
+  --nav-text: #ffffff;
+
+  /* 表格相关 */
+  --table-header-bg: #eaf3fa;
+  --table-header-text: #2f689f;
+  --table-border: #cfcfcf;
+  --table-hover: #f5fafd;
+
+  /* 字体家族 —— 与参考站一致，微软雅黑优先 */
+  --font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC",
+                 -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-mono: "Courier New", Consolas, monospace;
+
+  /* 字体大小 —— 基准 12px，密集型界面 */
+  --font-size-xs: 12px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+
+  /* 行高 */
+  --line-height-base: 1.5;
+  --line-height-lg: 1.7;
+
+  /* 间距 —— 整体收紧 */
+  --spacing-xs: 3px;
+  --spacing-sm: 6px;
+  --spacing-md: 10px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* 圆角 —— 接近直角 */
+  --border-radius-sm: 2px;
+  --border-radius-md: 3px;
+  --border-radius-lg: 4px;
+
+  /* 阴影 —— 克制 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.12);
+
+  /* 布局断点 */
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 768px;
+  --breakpoint-md: 1024px;
+  --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1920px;
+}
+
+/* 重置样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--text-primary);
+  background-color: var(--bg-gray);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 通用工具类 */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-disabled {
+  color: var(--text-disabled);
+}
+
+.bg-white {
+  background-color: var(--bg-white);
+}
+
+.bg-gray {
+  background-color: var(--bg-gray);
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.rounded-sm {
+  border-radius: var(--border-radius-sm);
+}
+
+.rounded-md {
+  border-radius: var(--border-radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--border-radius-lg);
+}

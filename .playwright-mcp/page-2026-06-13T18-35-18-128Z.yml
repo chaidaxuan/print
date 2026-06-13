@@ -1,0 +1,31 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - heading "印刷报价系统" [level=1] [ref=e7]
+      - generic [ref=e8]:
+        - generic [ref=e9]: DEMO-USER
+        - link "修改密码" [ref=e10] [cursor=pointer]:
+          - /url: "#"
+        - link "安全退出" [ref=e11] [cursor=pointer]:
+          - /url: "#"
+  - navigation [ref=e12]:
+    - generic [ref=e14]:
+      - link "首页" [ref=e15] [cursor=pointer]:
+        - /url: /
+      - link "报价" [ref=e16] [cursor=pointer]:
+        - /url: /quote/liandan
+      - link "彩盒" [ref=e17] [cursor=pointer]:
+        - /url: /caihe
+      - link "管理" [ref=e18] [cursor=pointer]:
+        - /url: /manage
+      - link "参数" [ref=e19] [cursor=pointer]:
+        - /url: /params
+      - link "通知" [ref=e20] [cursor=pointer]:
+        - /url: /notification
+  - link "首页" [ref=e24]:
+    - /url: /
+  - contentinfo [ref=e26]:
+    - paragraph [ref=e28]:
+      - text: 公司名称：印刷报价系统有限公司 | 地址：中国 | 电话：000-00000000 |
+      - link "备案号" [ref=e29] [cursor=pointer]:
+        - /url: "#"
