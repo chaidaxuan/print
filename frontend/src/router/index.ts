@@ -14,6 +14,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LiandanQuote.vue'),
     meta: { title: '专版联单报价' }
   },
+  {
+    path: '/params',
+    name: 'params',
+    component: () => import('@/views/LiandanParams.vue'),
+    meta: { title: '专版联单设置' }
+  },
   // 兼容旧入口：/quote 直接跳到联单
   {
     path: '/quote',
