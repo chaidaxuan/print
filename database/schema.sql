@@ -162,6 +162,34 @@ INSERT INTO printing_colors (name, code, plate_count, color_type, price_multipli
 
 -- 初始化系统参数
 INSERT INTO system_params (param_key, param_value, param_type, description) VALUES
-('cost_markup_rate', '0.609', 'cost_markup', '成本附加率（生产成本基础上的加成比例）'),
+('cost_markup_rate', '0.609', 'cost_markup', '成本附加率（生产成本基础上的加成比例，已弃用，改由 cost_addon_tiers 阶梯表驱动）'),
 ('wastage_rate', '0.05', 'wastage_rate', '印刷损耗率'),
 ('default_paper_loss', '10', 'wastage', '默认纸张损耗张数');
+
+-- 9. 成本附加阶梯表
+-- 依据 yinshuabaojia.com 专版联单实测反推：成本附加 = 生产成本 × 阶梯费率，
+-- 费率随生产成本金额递增而递减，最低档 10% 封底（详见 docs/LIANDAN_CALC_LOGIC.md）。
+CREATE TABLE IF NOT EXISTS cost_addon_tiers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT NOT NULL COMMENT '所属品类',
+    min_cost DECIMAL(12,2) NOT NULL COMMENT '生产成本下限(含)',
+    max_cost DECIMAL(12,2) COMMENT '生产成本上限(不含)，NULL 表示无上限',
+    rate DECIMAL(6,4) NOT NULL COMMENT '该档费率(小数，如0.609)',
+    fixed_addon DECIMAL(10,2) DEFAULT 0 COMMENT '该档固定附加值(元)，实测为0，保留以兼容真实参数',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_category (category_id),
+    FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成本附加阶梯表';
+
+-- 初始化成本附加阶梯（品类1=无碳联单）
+-- 实测锚点：394→60.9%、675→39.7%、1247→22.1%、2713→15.6%、≥3090→10%封底。
+-- 区间边界取相邻锚点的近似分界，上线前需接入真实 Tab5 参数校准。
+INSERT INTO cost_addon_tiers (category_id, min_cost, max_cost, rate, fixed_addon, sort_order) VALUES
+(1, 0,    500,  0.6090, 0, 1),
+(1, 500,  1000, 0.3970, 0, 2),
+(1, 1000, 1500, 0.2210, 0, 3),
+(1, 1500, 3000, 0.1560, 0, 4),
+(1, 3000, NULL, 0.1000, 0, 5);

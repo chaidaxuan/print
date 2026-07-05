@@ -26,6 +26,7 @@ from app.models import (
     PostProcessing,
     SystemParam,
     PrintingColor,
+    CostAddonTier,
 )
 
 
@@ -118,12 +119,12 @@ class LiandanQuoteEngine:
         # 5. 汇总
         production_cost = best["paper_cost"] + best["printing_cost"] + post_cost
 
-        # 利润率：自填优先，否则取系统成本附加率
+        # 成本附加：自填利润率优先；否则按生产成本查阶梯表（费率随金额递减，10%封底）
         if params.get("profit_rate") is not None:
             markup = Decimal(str(params["profit_rate"]))
+            cost_addon = production_cost * markup
         else:
-            markup = Decimal(str(self._get_system_param("cost_markup_rate", 0.609)))
-        cost_addon = production_cost * markup
+            cost_addon = self._calculate_cost_addon(production_cost, params.get("category_id", 1))
 
         total_cost = production_cost + cost_addon
         unit_price = total_cost / Decimal(str(quantity))
@@ -245,6 +246,34 @@ class LiandanQuoteEngine:
             except (TypeError, ValueError):
                 return default
         return default
+
+    # ----------------------------------------------------------- 成本附加(阶梯)
+    def _calculate_cost_addon(self, production_cost: Decimal, category_id: int) -> Decimal:
+        """按生产成本金额查阶梯表，返回成本附加 = 生产成本 × 费率 + 固定值。
+
+        实测(yinshuabaojia.com 专版联单)：费率随生产成本递增而递减，最低 10% 封底。
+        若表中无匹配档位（如未初始化），回退到旧的固定系数 cost_markup_rate。
+        详见 docs/LIANDAN_CALC_LOGIC.md。
+        """
+        tier = (
+            self.db.query(CostAddonTier)
+            .filter(
+                CostAddonTier.category_id == category_id,
+                CostAddonTier.is_active == True,  # noqa: E712
+                CostAddonTier.min_cost <= production_cost,
+                (CostAddonTier.max_cost == None)  # noqa: E711
+                | (CostAddonTier.max_cost > production_cost),
+            )
+            .order_by(CostAddonTier.sort_order)
+            .first()
+        )
+        if tier is None:
+            # 回退：阶梯表未配置时用旧系数，保证不崩
+            markup = Decimal(str(self._get_system_param("cost_markup_rate", 0.609)))
+            return production_cost * markup
+        rate = Decimal(str(tier.rate))
+        fixed = Decimal(str(tier.fixed_addon or 0))
+        return production_cost * rate + fixed
 
     # --------------------------------------------------------------- 阶梯价格
     def _calculate_ladder_prices(

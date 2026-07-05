@@ -369,3 +369,87 @@ WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
 2026-07-05 23:29:21,854 INFO sqlalchemy.engine.Engine [cached since 104.6s ago] {}
 2026-07-05 23:29:21,856 INFO sqlalchemy.engine.Engine ROLLBACK
 INFO:     127.0.0.1:60095 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-05 23:51:16,263 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:16,263 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-05 23:51:16,263 INFO sqlalchemy.engine.Engine [cached since 1503s ago] {'category_id_1': 1}
+2026-07-05 23:51:16,266 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:59884 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-05 23:51:16,273 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:16,273 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-05 23:51:16,274 INFO sqlalchemy.engine.Engine [cached since 1503s ago] {'category_id_1': 1}
+2026-07-05 23:51:16,276 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-07-05 23:51:16,277 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:16,277 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-05 23:51:16,277 INFO sqlalchemy.engine.Engine [cached since 1419s ago] {}
+INFO:     127.0.0.1:59886 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-05 23:51:16,279 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:59888 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-05 23:51:16,286 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:16,286 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-05 23:51:16,287 INFO sqlalchemy.engine.Engine [cached since 1419s ago] {}
+2026-07-05 23:51:16,288 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:56091 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-05 23:51:56,305 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:56,305 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-05 23:51:56,305 INFO sqlalchemy.engine.Engine [cached since 1543s ago] {'category_id_1': 1}
+2026-07-05 23:51:56,308 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:64339 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-05 23:51:56,315 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:56,316 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-05 23:51:56,316 INFO sqlalchemy.engine.Engine [cached since 1543s ago] {'category_id_1': 1}
+2026-07-05 23:51:56,319 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-07-05 23:51:56,319 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:56,320 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-05 23:51:56,320 INFO sqlalchemy.engine.Engine [cached since 1459s ago] {}
+INFO:     127.0.0.1:64341 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-05 23:51:56,322 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:64343 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-05 23:51:56,328 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-05 23:51:56,328 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-05 23:51:56,329 INFO sqlalchemy.engine.Engine [cached since 1459s ago] {}
+2026-07-05 23:51:56,330 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:64345 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-06 00:14:46,102 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-06 00:14:46,103 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-06 00:14:46,103 INFO sqlalchemy.engine.Engine [cached since 2913s ago] {'category_id_1': 1}
+2026-07-06 00:14:46,104 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:60766 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-06 00:14:46,109 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-06 00:14:46,110 INFO sqlalchemy.engine.Engine SELECT product_sizes.id AS product_sizes_id, product_sizes.category_id AS product_sizes_category_id, product_sizes.name AS product_sizes_name, product_sizes.width AS product_sizes_width, product_sizes.height AS product_sizes_height, product_sizes.code AS product_sizes_code, product_sizes.sort_order AS product_sizes_sort_order, product_sizes.is_active AS product_sizes_is_active 
+FROM product_sizes 
+WHERE product_sizes.category_id = %(category_id_1)s AND product_sizes.is_active = true ORDER BY product_sizes.sort_order
+2026-07-06 00:14:46,110 INFO sqlalchemy.engine.Engine [cached since 2913s ago] {'category_id_1': 1}
+2026-07-06 00:14:46,111 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:58407 - "GET /api/quote/sizes?category_id=1 HTTP/1.1" 200 OK
+2026-07-06 00:14:46,140 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-06 00:14:46,140 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-06 00:14:46,140 INFO sqlalchemy.engine.Engine [cached since 2829s ago] {}
+2026-07-06 00:14:46,142 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:58409 - "GET /api/quote/colors HTTP/1.1" 200 OK
+2026-07-06 00:14:46,148 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-06 00:14:46,148 INFO sqlalchemy.engine.Engine SELECT printing_colors.id AS printing_colors_id, printing_colors.name AS printing_colors_name, printing_colors.code AS printing_colors_code, printing_colors.plate_count AS printing_colors_plate_count, printing_colors.color_type AS printing_colors_color_type, printing_colors.price_multiplier AS printing_colors_price_multiplier, printing_colors.sort_order AS printing_colors_sort_order, printing_colors.is_active AS printing_colors_is_active 
+FROM printing_colors 
+WHERE printing_colors.is_active = true ORDER BY printing_colors.sort_order
+2026-07-06 00:14:46,148 INFO sqlalchemy.engine.Engine [cached since 2829s ago] {}
+2026-07-06 00:14:46,149 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:58411 - "GET /api/quote/colors HTTP/1.1" 200 OK

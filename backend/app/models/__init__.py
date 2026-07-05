@@ -6,6 +6,7 @@ from app.models.processing import PostProcessing
 from app.models.color import PrintingColor
 from app.models.param import SystemParam
 from app.models.quote import QuoteRecord
+from app.models.cost_addon_tier import CostAddonTier
 
 __all__ = [
     "ProductCategory",
@@ -16,4 +17,5 @@ __all__ = [
     "PrintingColor",
     "SystemParam",
     "QuoteRecord",
+    "CostAddonTier",
 ]
