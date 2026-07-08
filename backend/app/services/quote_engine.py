@@ -39,6 +39,50 @@ def _layout(outer_w: float, outer_h: float, inner_w: float, inner_h: float) -> i
     return max(a, b)
 
 
+def _fits(outer_w: float, outer_h: float, inner_w: float, inner_h: float) -> bool:
+    """inner 矩形是否能放进 outer（考虑旋转 90°）。"""
+    return (inner_w <= outer_w and inner_h <= outer_h) or (
+        inner_h <= outer_w and inner_w <= outer_h
+    )
+
+
+def _standard_cuts(full_w: float, full_h: float, levels: int = 7):
+    """由整张纸逐级对切（每次切较长边）生成标准开纸序列。
+
+    返回 [(per_full, cut_w, cut_h), ...]，per_full 为每全张可开数：
+    全开=1、对开=2、4开、8开、16开…。这是印刷行业的开纸方式，
+    机器按'能装下的最大开纸'上机，而非直接把机器幅面套整张纸。
+    """
+    cuts = []
+    w, h = full_w, full_h
+    n = 1
+    for _ in range(levels):
+        cuts.append((n, w, h))
+        if w >= h:
+            w = w / 2
+        else:
+            h = h / 2
+        n *= 2
+    return cuts
+
+
+# 每全张可开数 → 开数中文名，用于计算轨迹展示
+LEVEL_NAMES = {
+    1: "全开",
+    2: "对开",
+    4: "4开",
+    8: "8开",
+    16: "16开",
+    32: "32开",
+    64: "64开",
+    128: "128开",
+}
+
+
+def _level_name(per_full: int) -> str:
+    return LEVEL_NAMES.get(per_full, f"{per_full}开")
+
+
 class LiandanQuoteEngine:
     """无碳联单报价计算引擎"""
 
@@ -103,31 +147,71 @@ class LiandanQuoteEngine:
             .filter(PrintingMachine.is_active == True)  # noqa: E712
             .all()
         )
-        best = None
+        solutions = []
         for machine in machines:
             sol = self._solve_machine(
                 machine, size_w, size_h, total_pages, color, paper
             )
-            if sol and (best is None or sol["total_cost"] < best["total_cost"]):
-                best = sol
-        if not best:
+            if sol:
+                solutions.append(sol)
+        if not solutions:
             raise ValueError("无法找到合适的印刷机器")
 
-        # 4. 后加工
-        post_cost = self._calculate_post_processing(params, quantity)
+        # 4. 后加工（对所有机器相同：版数取自颜色、开数取自成品在全开纸上的可开数，
+        #    均与具体机器无关，故循环外算一次即可）
+        plate_count = max(int(color.plate_count), 1)
+        kai = _layout(float(paper.width or 0), float(paper.height or 0), size_w, size_h)
+        post_cost, post_items = self._calculate_post_processing(
+            params,
+            quantity,
+            plate_count=plate_count,
+            total_pages=total_pages,
+            sheet_count=params["sheet_count"],
+            kai=kai,
+        )
 
-        # 5. 汇总
-        production_cost = best["paper_cost"] + best["printing_cost"] + post_cost
+        # 5. 为每台机器补齐 生产成本/成本附加/总成本，供比价与明细展示
+        profit_rate = params.get("profit_rate")
+        category_id = params.get("category_id", 1)
+        for sol in solutions:
+            prod = sol["paper_cost"] + sol["printing_cost"] + post_cost
+            if profit_rate is not None:
+                addon = prod * Decimal(str(profit_rate))
+            else:
+                addon = self._calculate_cost_addon(prod, category_id)
+            sol["post_processing_cost"] = post_cost
+            sol["production_cost"] = prod
+            sol["cost_addon"] = addon
+            sol["grand_total"] = prod + addon  # 含后加工+附加的最终总成本
 
-        # 成本附加：自填利润率优先；否则按生产成本查阶梯表（费率随金额递减，10%封底）
-        if params.get("profit_rate") is not None:
-            markup = Decimal(str(params["profit_rate"]))
-            cost_addon = production_cost * markup
-        else:
-            cost_addon = self._calculate_cost_addon(production_cost, params.get("category_id", 1))
+        # 6. 取最终总成本最低者为推荐方案
+        solutions.sort(key=lambda s: s["grand_total"])
+        best = solutions[0]
 
-        total_cost = production_cost + cost_addon
+        production_cost = best["production_cost"]
+        cost_addon = best["cost_addon"]
+        total_cost = best["grand_total"]
         unit_price = total_cost / Decimal(str(quantity))
+
+        # 成本附加率（反算，供计算轨迹展示；生产成本恒 > 0）
+        addon_rate = float(cost_addon / production_cost) if production_cost else 0.0
+
+        # 计算轨迹 + 派生展示字段（开纸类型/系列、拼版过程、逐步公式）
+        paper_series = (paper.spec_name or "").replace("全开", "").strip() or "大度"
+        cut_type = f"{paper_series}{_level_name(best['per_full'])}"
+        calc_trace = self._build_calc_trace(
+            best=best,
+            quantity=quantity,
+            pages_per_book=pages_per_book,
+            production_cost=production_cost,
+            cost_addon=cost_addon,
+            total_cost=total_cost,
+            unit_price=unit_price,
+            addon_rate=addon_rate,
+            post_cost=post_cost,
+            post_items=post_items,
+            paper_series=paper_series,
+        )
 
         return {
             "quantity": quantity,
@@ -148,7 +232,129 @@ class LiandanQuoteEngine:
                 "pieces_per_plate": best["pieces_per_plate"],
                 "sheets_to_print": best["sheets_to_print"],
                 "paper_sheets": best["paper_sheets"],
+                "spoilage": best["spoilage"],
             },
+            "all_machines": [
+                {
+                    "name": s["machine_name"],
+                    "printing_size": s["printing_size"],
+                    "plates": s["plates"],
+                    "pieces_layout": s["pieces_layout"],
+                    "sheets_to_print": s["sheets_to_print"],
+                    "paper_sheets": s["paper_sheets"],
+                    "paper_cost": float(s["paper_cost"].quantize(Decimal("0.01"))),
+                    "printing_cost": float(s["printing_cost"].quantize(Decimal("0.01"))),
+                    "post_processing_cost": float(s["post_processing_cost"].quantize(Decimal("0.01"))),
+                    "production_cost": float(s["production_cost"].quantize(Decimal("0.01"))),
+                    "cost_addon": float(s["cost_addon"].quantize(Decimal("0.01"))),
+                    "total_cost": float(s["grand_total"].quantize(Decimal("0.01"))),
+                    "is_recommended": s is best,
+                }
+                for s in solutions
+            ],
+            # —— 明细弹窗新增 ——
+            "calc_trace": calc_trace,
+            "post_processing_items": post_items,
+            "paper_series": paper_series,
+            "cut_type": cut_type,
+            "weight_kg": None,   # 按“缺失字段留空”决策暂不填
+            "volume_m3": None,
+        }
+
+    # --------------------------------------------------------- 计算轨迹构建
+    def _build_calc_trace(
+        self,
+        best: Dict,
+        quantity: int,
+        pages_per_book: int,
+        production_cost: Decimal,
+        cost_addon: Decimal,
+        total_cost: Decimal,
+        unit_price: Decimal,
+        addon_rate: float,
+        post_cost: Decimal,
+        post_items: List[Dict],
+        paper_series: str,
+    ) -> Dict:
+        """把本次报价的真实计算过程组装成结构化轨迹：
+        逐步公式链（模板 + 代入真值 + 结果）、拼版逐级对切选择过程、后加工逐项。
+        供成本明细弹窗如实渲染，数值全部取自 best，与实际算法一致。
+        """
+        tp = quantity * pages_per_book
+        pcs = best["pieces_per_plate"]
+        stp = best["sheets_to_print"]
+        spoil = best["spoilage"]
+        per_full = best["per_full"]
+        psheets = best["paper_sheets"]
+        per_sheet = best["per_sheet_price"]
+        plates = best["plates"]
+        paper_cost = best["paper_cost"]
+        printing_cost = best["printing_cost"]
+
+        def step(key, label, formula, substituted, result, unit=None):
+            return {
+                "key": key,
+                "label": label,
+                "formula": formula,
+                "substituted": substituted,
+                "result": result,
+                "unit": unit,
+            }
+
+        post_expr = " + ".join(
+            f"{i['name']}({i['cost']})" for i in post_items
+        ) or "无"
+
+        formula_chain = [
+            step("total_pages", "总页数", "数量 × 每本页数",
+                 f"{quantity} × {pages_per_book}", tp, "页"),
+            step("sheets_to_print", "每版印数", "⌈总页数 ÷ 每版拼数⌉",
+                 f"⌈{tp} ÷ {pcs}⌉", stp, "张"),
+            step("paper_sheets", "买纸数", "⌈(每版印数 + 放数) ÷ 每全张可开数⌉",
+                 f"⌈({stp} + {spoil}) ÷ {per_full}⌉", psheets, "全张"),
+            step("paper_cost", "纸款", "全开单张纸价 × 买纸数",
+                 f"{float(per_sheet):.3f} × {psheets}",
+                 float(paper_cost.quantize(Decimal("0.01"))), "元"),
+            step("printing_cost", "印刷费", "开机费 + 加色费×(色数−1) + 每版印数÷1000×千印价×色数",
+                 f"{plates} 色：开机费 + 加色费×{plates - 1} + {stp}÷1000×千印价×{plates}",
+                 float(printing_cost.quantize(Decimal("0.01"))), "元"),
+            step("post_processing_cost", "后加工费", "Σ 各工序 max(单价×数量, 最低消费)",
+                 post_expr, float(post_cost.quantize(Decimal("0.01"))), "元"),
+            step("production_cost", "生产成本", "纸款 + 印刷费 + 后加工费",
+                 f"{float(paper_cost):.2f} + {float(printing_cost):.2f} + {float(post_cost):.2f}",
+                 float(production_cost.quantize(Decimal("0.01"))), "元"),
+            step("cost_addon", "成本附加", "生产成本 × 阶梯附加率",
+                 f"{float(production_cost):.2f} × {addon_rate:.4f}",
+                 float(cost_addon.quantize(Decimal("0.01"))), "元"),
+            step("total_cost", "总成本", "生产成本 + 成本附加",
+                 f"{float(production_cost):.2f} + {float(cost_addon):.2f}",
+                 float(total_cost.quantize(Decimal("0.01"))), "元"),
+            step("unit_price", "报价单价", "总成本 ÷ 数量",
+                 f"{float(total_cost):.2f} ÷ {quantity}",
+                 float(unit_price.quantize(Decimal("0.001"), ROUND_HALF_UP)), "元/本"),
+        ]
+
+        imposition = {
+            "press_w": round(best["press_w"], 1),
+            "press_h": round(best["press_h"], 1),
+            "cut_levels": best["cut_levels"],
+            "selected_cut": best["printing_size"],
+            "per_full": per_full,
+            "layout_cols": best["layout_cols"],
+            "layout_rows": best["layout_rows"],
+            "pieces_per_plate": pcs,
+            "layout_expr": best["pieces_layout"],
+            "reason": (
+                f"{paper_series}{_level_name(per_full)} {best['printing_size']} 是能装进 "
+                f"{best['machine_name']} 幅面 {int(best['press_w'])}×{int(best['press_h'])} "
+                f"的最大标准开纸，在其上拼版 {best['pieces_layout']}"
+            ),
+        }
+
+        return {
+            "formula_chain": formula_chain,
+            "imposition": imposition,
+            "post_processing_items": post_items,
         }
 
     # ----------------------------------------------------------- 单台机器求解
@@ -161,21 +367,44 @@ class LiandanQuoteEngine:
         color: PrintingColor,
         paper: PaperSpec,
     ) -> Optional[Dict]:
-        """在指定机器的上机幅面上求解成本。"""
+        """在指定机器上求解成本。
+
+        真实印刷逻辑：机器不是直接把整张全开纸塞进去，而是先把纸开成
+        能装进机器的最大标准开纸（全开/对开/4开/8开…），在该开纸上拼版。
+        """
         press_w = float(machine.max_width)
         press_h = float(machine.max_height)
 
-        # 成品在上机幅面上的拼数
-        pieces_per_plate = _layout(press_w, press_h, size_w, size_h)
-        if pieces_per_plate == 0:
-            return None  # 成品比幅面还大，机器不适用
-
-        # 上机幅面能从一张全开纸上裁出几张（每全张可开数）
         full_w = float(paper.width or 0)
         full_h = float(paper.height or 0)
-        per_full = _layout(full_w, full_h, press_w, press_h)
-        if per_full == 0:
-            return None  # 上机幅面比全开纸还大，该纸不适用
+        if full_w <= 0 or full_h <= 0:
+            return None
+
+        # 选能装进本机的最大标准开纸（per_full 越小=开纸越大）。
+        # 逐级对切全程记录，供计算轨迹展示：每级尺寸、能否上机、是否被选中。
+        cut = None
+        cut_levels = []
+        for per_full, cut_w, cut_h in _standard_cuts(full_w, full_h):
+            fits = _fits(press_w, press_h, cut_w, cut_h)
+            selected = fits and cut is None  # 第一个能装进的即选中
+            cut_levels.append({
+                "per_full": per_full,
+                "level_name": _level_name(per_full),
+                "cut_w": round(cut_w, 1),
+                "cut_h": round(cut_h, 1),
+                "fits": fits,
+                "selected": selected,
+            })
+            if selected:
+                cut = (per_full, cut_w, cut_h)
+        if cut is None:
+            return None  # 最小开纸都装不进这台机器
+        per_full, cut_w, cut_h = cut
+
+        # 成品在开纸上的拼数
+        pieces_per_plate = _layout(cut_w, cut_h, size_w, size_h)
+        if pieces_per_plate == 0:
+            return None  # 成品比开纸还大
 
         # 印张数
         sheets_to_print = -(-total_pages // pieces_per_plate)  # ceil
@@ -183,55 +412,183 @@ class LiandanQuoteEngine:
         # 放数（开机损耗，单位：印张）
         spoilage = int(self._get_system_param("default_paper_loss", 100))
 
-        # 全开买纸数
+        # 全开买纸数 = ceil((印张数 + 放数) / 每全张可开数)
         paper_sheets = -(-(sheets_to_print + spoilage) // per_full)  # ceil
-        paper_cost = Decimal(str(paper.price_per_sheet)) * paper_sheets
 
-        # 印刷费：版数 × (开机费 + 印张/1000 × 千印价)
-        plates = max(int(color.plate_count), 1)
+        # 纸款：优先按令价计（元/令，1令=500全张），回退到单张价。
+        # 参考站 Tab3 用令价表计价，实测锚点反推 50克≈394元/令。
+        ream_price = getattr(paper, "price_per_ream", None)
+        if ream_price and float(ream_price) > 0:
+            per_sheet = Decimal(str(ream_price)) / Decimal(500)
+        else:
+            per_sheet = Decimal(str(paper.price_per_sheet))
+        paper_cost = per_sheet * paper_sheets
+
+        # 印刷费：开机费 + 加色费×(色数−1) + 印工×色数
+        #   color.plate_count 实为“色数”(单黑1/双色2/四色4)，非物理印版数。
+        #   实测(海德堡6开)：单黑 80+40×1=120、双色 80+30×1+40×2=190 均命中。
+        #   每加一色 = 加色开机费 color_fee + 一遍印工(印张/1000×千印价)。
+        color_count = max(int(color.plate_count), 1)
         per_thousand = Decimal(str(machine.price_per_thousand))
         opening = Decimal(str(machine.opening_fee))
-        printing_cost = plates * (
-            opening + (per_thousand * Decimal(sheets_to_print) / Decimal(1000))
+        color_fee = Decimal(str(getattr(machine, "color_fee", 0) or 0))
+        ink_per_color = per_thousand * Decimal(sheets_to_print) / Decimal(1000)
+        printing_cost = (
+            opening
+            + color_fee * Decimal(color_count - 1)
+            + ink_per_color * Decimal(color_count)
         )
+        plates = color_count
+
+        # 每版拼数的行列表达（如 2×2=4），仅用于展示
+        cols = int(cut_w // size_w) * int(cut_h // size_h)
+        rows_alt = int(cut_w // size_h) * int(cut_h // size_w)
+        if rows_alt > cols:
+            nx, ny = int(cut_w // size_h), int(cut_h // size_w)
+        else:
+            nx, ny = int(cut_w // size_w), int(cut_h // size_h)
 
         return {
             "machine_name": machine.name,
-            "printing_size": f"{int(press_w)}×{int(press_h)}",
+            "printing_size": f"{int(cut_w)}×{int(cut_h)}",
             "plates": plates,
             "pieces_per_plate": pieces_per_plate,
+            "pieces_layout": f"{nx}×{ny}={pieces_per_plate}",
             "sheets_to_print": sheets_to_print,
+            "spoilage": spoilage,
             "paper_sheets": paper_sheets,
+            "per_full": per_full,
             "paper_cost": paper_cost,
             "printing_cost": printing_cost,
             "total_cost": paper_cost + printing_cost,
+            # —— 拼版轨迹（供计算过程展示）——
+            "press_w": press_w,
+            "press_h": press_h,
+            "cut_levels": cut_levels,
+            "layout_cols": nx,
+            "layout_rows": ny,
+            "per_sheet_price": per_sheet,
         }
 
     # ------------------------------------------------------------- 后加工费用
-    def _calculate_post_processing(self, params: Dict, quantity: int) -> Decimal:
+    # 计价单位 → 中文标签 / 计费基数标签
+    _UNIT_LABEL = {
+        "per_book": "元/本",
+        "per_plate": "元/版",
+        "per_page": "元/页",
+        "per_sheet_count": "元/联",
+        "per_unit": "元/个",
+        "per_thousand": "元/千",
+        "fixed": "元/次",
+    }
+    _BASIS_LABEL = {
+        "per_book": "本",
+        "per_plate": "版",
+        "per_page": "页",
+        "per_sheet_count": "联",
+        "per_unit": "个",
+        "per_thousand": "千",
+        "fixed": "次",
+    }
+
+    def _calculate_post_processing(
+        self,
+        params: Dict,
+        quantity: int,
+        plate_count: int,
+        total_pages: int,
+        sheet_count: int,
+        kai: int,
+    ) -> tuple:
+        """按前端勾选的工序分组累加后工费，返回 (总额, 逐项明细)。
+
+        前端提交的是 group_code（如 binding/add_card/creasing）。加卡纸、装订这类
+        按成品开数分多档，需用 kai 在同组内选出对应档；单档项 group_code 即 code。
+        每个工序：单价×数量(视单位) 与 最低消费(min_charge) 取较大值（保底）。
+        逐项明细 items 供成本明细弹窗展示每项算法（如“装订(20),加封面(30)”）。
+        """
         total = Decimal("0")
-        for code in params.get("post_processing", []):
-            proc = (
-                self.db.query(PostProcessing)
-                .filter(
-                    PostProcessing.code == code,
-                    PostProcessing.is_active == True,  # noqa: E712
-                )
-                .first()
-            )
+        items = []
+        basis_qty = {
+            "per_book": quantity,
+            "per_plate": plate_count,
+            "per_page": total_pages,
+            "per_sheet_count": sheet_count,
+        }
+        for group in params.get("post_processing", []):
+            proc = self._resolve_processing(group, kai)
             if not proc:
                 continue
-            if proc.price_type and proc.price_type.value == "fixed":
-                cost = Decimal(str(proc.unit_price))
-            elif proc.price_type and proc.price_type.value == "per_thousand":
-                cost = Decimal(str(proc.unit_price)) * Decimal(quantity) / Decimal(1000)
-            else:  # per_unit
-                cost = Decimal(str(proc.unit_price)) * Decimal(quantity)
+            raw = self._unit_cost(
+                proc, quantity, plate_count, total_pages, sheet_count
+            )
             min_charge = Decimal(str(proc.min_charge or 0))
-            if cost < min_charge:
-                cost = min_charge
+            cost = max(raw, min_charge)
+            unit = proc.price_type.value if proc.price_type else "per_book"
+            items.append({
+                "name": proc.name,
+                "unit_price": float(Decimal(str(proc.unit_price))),
+                "unit_label": self._UNIT_LABEL.get(unit, "元/本"),
+                "qty_basis": self._BASIS_LABEL.get(unit, "本"),
+                "qty": int(basis_qty.get(unit, quantity)),
+                "raw_cost": float(raw.quantize(Decimal("0.01"), ROUND_HALF_UP)),
+                "min_charge": float(min_charge),
+                "cost": float(cost.quantize(Decimal("0.01"), ROUND_HALF_UP)),
+            })
             total += cost
-        return total
+        return total, items
+
+    def _resolve_processing(self, group_code: str, kai: int) -> Optional[PostProcessing]:
+        """在同一 group_code 下按成品开数(kai)选出对应档位。
+
+        选档规则：升序按 max_kai 取第一个 max_kai >= kai 的档，自动闭合相邻档间的
+        缝隙（如 19 开介于 11-18 与 20-50 之间仍归入 20-50 档）；max_kai 为 NULL
+        表示无上限档（如“50开以上”），作为兜底。单档项(如加封面)只有一行直接返回。
+        """
+        rows = (
+            self.db.query(PostProcessing)
+            .filter(
+                PostProcessing.group_code == group_code,
+                PostProcessing.is_active == True,  # noqa: E712
+            )
+            .all()
+        )
+        if not rows:
+            return None
+        banded = [r for r in rows if r.max_kai is not None]
+        unbounded = [r for r in rows if r.max_kai is None]
+        for r in sorted(banded, key=lambda x: x.max_kai):
+            if kai <= r.max_kai:
+                return r
+        if unbounded:
+            return unbounded[0]
+        return banded[-1] if banded else None
+
+    def _unit_cost(
+        self,
+        proc: PostProcessing,
+        quantity: int,
+        plate_count: int,
+        total_pages: int,
+        sheet_count: int,
+    ) -> Decimal:
+        """按计价单位算未取最低消费前的费用。"""
+        unit = proc.price_type.value if proc.price_type else "per_book"
+        up = Decimal(str(proc.unit_price))
+        if unit == "per_book":
+            return up * Decimal(quantity)
+        if unit == "per_plate":
+            return up * Decimal(plate_count)
+        if unit == "per_page":
+            return up * Decimal(total_pages)
+        if unit == "per_sheet_count":
+            return up * Decimal(sheet_count)
+        # 旧值兼容
+        if unit == "per_thousand":
+            return up * Decimal(quantity) / Decimal(1000)
+        if unit == "fixed":
+            return up
+        return up * Decimal(quantity)  # per_unit 兜底
 
     # --------------------------------------------------------------- 系统参数
     def _get_system_param(self, key: str, default) -> float:

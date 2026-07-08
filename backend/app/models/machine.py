@@ -15,6 +15,7 @@ class PrintingMachine(Base):
     max_height = Column(DECIMAL(10, 2), nullable=False, comment="最大印刷高度(mm)")
     machine_type = Column(String(50), comment="机型")
     opening_fee = Column(DECIMAL(10, 2), default=0, comment="开机费(元)")
+    color_fee = Column(DECIMAL(10, 2), default=0, comment="加色费(元/色，每加一色的额外开机费)")
     price_per_thousand = Column(DECIMAL(10, 2), default=0, comment="千印价(元/千张)")
     is_active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())

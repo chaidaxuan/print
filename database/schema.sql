@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS paper_specs (
     width DECIMAL(10,2) COMMENT '纸张宽度(mm)',
     height DECIMAL(10,2) COMMENT '纸张高度(mm)',
     spec_name VARCHAR(50) COMMENT '规格名称：大度、正度',
-    price_per_sheet DECIMAL(10,4) NOT NULL COMMENT '单张价格(元/张)',
+    price_per_sheet DECIMAL(10,4) NOT NULL COMMENT '单张价格(元/张)，由令价换算，保留兼容',
+    price_per_ream DECIMAL(10,2) COMMENT '令价(元/令，1令=500全张)，实测反推，报价按此换算单张',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -61,18 +62,26 @@ CREATE TABLE IF NOT EXISTS paper_specs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='纸张规格与价格表';
 
 -- 5. 后道工序价格表
+-- 计价单位对齐参考站：元/本(per_book)、元/版(per_plate)、元/页(per_page)、元/联(per_sheet_count)。
+-- 加卡纸/装订按成品开数分多档：每档一条独立记录(code=binding_1..4)，group_code(binding)串同组，
+-- 引擎按 group_code + 成品开数(kai) 选档，见 quote_engine._resolve_processing。
 CREATE TABLE IF NOT EXISTS post_processing (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL COMMENT '工序名称：装订-胶左、打号码',
-    code VARCHAR(50) NOT NULL UNIQUE COMMENT '工序代码',
+    name VARCHAR(100) NOT NULL COMMENT '工序名称：装订(20开-50开)、彩色联单加号码',
+    code VARCHAR(50) NOT NULL UNIQUE COMMENT '工序代码，全表唯一',
     category VARCHAR(50) COMMENT '工序分类',
-    price_type ENUM('fixed', 'per_unit', 'per_thousand') DEFAULT 'per_unit' COMMENT '计价方式',
+    price_type ENUM('fixed', 'per_unit', 'per_thousand', 'per_book', 'per_plate', 'per_page', 'per_sheet_count') DEFAULT 'per_book' COMMENT '计价方式',
     unit_price DECIMAL(10,4) NOT NULL COMMENT '单价',
-    min_charge DECIMAL(10,2) DEFAULT 0 COMMENT '最低收费',
+    min_charge DECIMAL(10,2) DEFAULT 0 COMMENT '最低收费(最低消费/开机费)',
+    group_code VARCHAR(50) COMMENT '前端勾选分组，如 add_card/binding；单档项即 code',
+    min_kai INT COMMENT '开数档下限(含)，仅展示；NULL=不限',
+    max_kai INT COMMENT '开数档上限(含)，选档用；NULL=最大档(如50开以上)',
+    sort_order INT DEFAULT 0 COMMENT '展示排序',
     description TEXT COMMENT '工序说明',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_group (group_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='后道工序价格表';
 
 -- 6. 印刷颜色配置表
@@ -134,24 +143,36 @@ INSERT INTO product_sizes (category_id, name, width, height, code, sort_order) V
 
 -- 初始化印刷机器
 INSERT INTO printing_machines (name, code, max_width, max_height, machine_type, opening_fee, price_per_thousand) VALUES
-('海德堡6开四色机', 'heidelberg_6k', 420, 285, '四色机', 150, 80),
+('海德堡6开四色机', 'heidelberg_6k', 460, 320, '四色机', 150, 80),
 ('小森920B对开机', 'komori_920b', 920, 640, '对开机', 200, 100),
 ('小森1620全开机', 'komori_1620', 1600, 1200, '全开机', 300, 120),
 ('小森1320全开机', 'komori_1320', 1300, 900, '全开机', 250, 110);
 
 -- 初始化纸张规格（无碳纸）
-INSERT INTO paper_specs (name, category, gram_weight, width, height, spec_name, price_per_sheet) VALUES
-('无碳纸', '无碳纸', 50, 889, 1194, '大度全开', 0.85),
-('无碳纸', '无碳纸', 80, 889, 1194, '大度全开', 1.20),
-('无碳纸', '无碳纸', 108, 889, 1194, '大度全开', 1.50);
+-- price_per_ream 令价(元/令，1令=500全张)为主计价，price_per_sheet=令价/500 兜底。
+-- 50克令价 394 由 yinshuabaojia.com 实测反推(100本纸款254、买纸322全张 → 254/322×500≈394)。
+INSERT INTO paper_specs (name, category, gram_weight, width, height, spec_name, price_per_ream, price_per_sheet) VALUES
+('无碳纸', '无碳纸', 50, 889, 1194, '大度全开', 394, 0.788),
+('无碳纸', '无碳纸', 80, 889, 1194, '大度全开', 577, 1.154),
+('无碳纸', '无碳纸', 108, 889, 1194, '大度全开', 721, 1.442);
 
--- 初始化后道工序
-INSERT INTO post_processing (name, code, category, price_type, unit_price, description) VALUES
-('装订-胶左', 'binding_left', '装订', 'per_unit', 0.20, '左侧胶装订'),
-('装订-胶头', 'binding_top', '装订', 'per_unit', 0.20, '顶部胶装订'),
-('打号码', 'numbering', '打码', 'per_unit', 0.05, '打印流水号'),
-('压痕压点线', 'creasing', '压线', 'per_unit', 0.08, '压痕或压点线'),
-('加封面', 'add_cover', '封面', 'per_unit', 0.15, '增加封面');
+-- 初始化后道工序（对齐 yinshuabaojia.com 参考站后工参数表）
+-- 加卡纸、装订按成品开数分4档；其余为单档。min_kai 仅展示，选档以 max_kai 为准
+-- （升序取第一个 max_kai>=成品开数的档，NULL 为“50开以上”兜底档）。
+INSERT INTO post_processing (name, code, group_code, price_type, unit_price, min_charge, min_kai, max_kai, sort_order) VALUES
+('加卡纸(10开-8开)',  'add_card_1',  'add_card',   'per_book',        0.4,  30, 1,    10,   1),
+('加卡纸(11开-18开)', 'add_card_2',  'add_card',   'per_book',        0.2,  30, 11,   18,   2),
+('加卡纸(20开-50开)', 'add_card_3',  'add_card',   'per_book',        0.2,  30, 19,   50,   3),
+('加卡纸(50开以上)',  'add_card_4',  'add_card',   'per_book',        0.2,  30, 51,   NULL, 4),
+('加封面',           'add_cover',   'add_cover',  'per_book',        0.3,  30, NULL, NULL, 5),
+('印封面',           'print_cover', 'print_cover','per_book',        0.3,  30, NULL, NULL, 6),
+('压点线',           'creasing',    'creasing',   'per_plate',       0.01, 30, NULL, NULL, 7),
+('彩色联单加号码',    'numbering',   'numbering',  'per_page',        0.02, 0,  NULL, NULL, 8),
+('装订(10开-8开)',   'binding_1',   'binding',    'per_book',        0.3,  20, 1,    10,   9),
+('装订(11开-18开)',  'binding_2',   'binding',    'per_book',        0.3,  20, 11,   18,   10),
+('装订(20开-50开)',  'binding_3',   'binding',    'per_book',        0.1,  20, 19,   50,   11),
+('装订(50开以上)',   'binding_4',   'binding',    'per_book',        0.1,  20, 51,   NULL, 12),
+('换边联字',         'edge_words',  'edge_words', 'per_sheet_count', 10,   30, NULL, NULL, 13);
 
 -- 初始化印刷颜色
 INSERT INTO printing_colors (name, code, plate_count, color_type, price_multiplier, sort_order) VALUES
@@ -164,7 +185,7 @@ INSERT INTO printing_colors (name, code, plate_count, color_type, price_multipli
 INSERT INTO system_params (param_key, param_value, param_type, description) VALUES
 ('cost_markup_rate', '0.609', 'cost_markup', '成本附加率（生产成本基础上的加成比例，已弃用，改由 cost_addon_tiers 阶梯表驱动）'),
 ('wastage_rate', '0.05', 'wastage_rate', '印刷损耗率'),
-('default_paper_loss', '10', 'wastage', '默认纸张损耗张数');
+('default_paper_loss', '100', 'wastage', '默认纸张损耗张数(印张层级放数)');
 
 -- 9. 成本附加阶梯表
 -- 依据 yinshuabaojia.com 专版联单实测反推：成本附加 = 生产成本 × 阶梯费率，

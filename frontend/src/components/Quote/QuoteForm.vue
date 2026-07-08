@@ -141,28 +141,17 @@
                   <tr>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="design" v-model="postProcessingLocal" />
+                        <input type="checkbox" v-model="designChecked" />
                         我要设计
                       </label>
                     </td>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="binding" v-model="bindingChecked" />
+                        <input type="checkbox" value="binding" v-model="localData.post_processing" />
                         装订
                       </label>
-                      <span v-if="bindingChecked">(
-                        <label class="checkbox-label inline">
-                          <input type="checkbox" value="binding_left" v-model="localData.post_processing" />
-                          胶左
-                        </label>
-                        /
-                        <label class="checkbox-label inline">
-                          <input type="checkbox" value="binding_top" v-model="localData.post_processing" />
-                          胶头
-                        </label>
-                      )</span>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="sheet_delivery" v-model="postProcessingLocal" />
+                        <input type="checkbox" v-model="sheetDeliveryChecked" />
                         印张交货
                       </label>
                     </td>
@@ -170,14 +159,14 @@
                   <tr>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="add_card" v-model="postProcessingLocal" />
+                        <input type="checkbox" value="add_card" v-model="localData.post_processing" />
                         加卡纸
                       </label>
                     </td>
                     <td>
                       <label class="checkbox-label">
                         <input type="checkbox" value="numbering" v-model="localData.post_processing" />
-                        打号码
+                        彩色联单加号码
                       </label>
                     </td>
                   </tr>
@@ -198,13 +187,13 @@
                   <tr>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="print_cover" v-model="postProcessingLocal" />
+                        <input type="checkbox" value="print_cover" v-model="localData.post_processing" />
                         印封面
                       </label>
                     </td>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="edge_words" v-model="postProcessingLocal" />
+                        <input type="checkbox" value="edge_words" v-model="localData.post_processing" />
                         换边联字
                       </label>
                     </td>
@@ -212,7 +201,7 @@
                   <tr>
                     <td colspan="2">
                       <label class="checkbox-label">
-                        <input type="checkbox" value="packing" v-model="postProcessingLocal" />
+                        <input type="checkbox" v-model="packingChecked" />
                         打包
                       </label>
                     </td>
@@ -315,8 +304,10 @@ const backHighQuality = ref(false)
 const customProfit = ref(false)
 const profitPercent = ref<number | null>(null)
 const calculated = ref(false)
-const bindingChecked = ref(true)
-const postProcessingLocal = ref<string[]>([])
+// 仅 UI 展示、本期不参与算价的勾选项
+const designChecked = ref(false)
+const sheetDeliveryChecked = ref(false)
+const packingChecked = ref(false)
 
 const pagesPerSheet = computed(() => {
   return Math.floor(localData.value.pages_per_book / localData.value.sheet_count)

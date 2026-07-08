@@ -8,10 +8,14 @@ from app.schemas.quote import (
     LiandanQuoteResponse,
     ProductSizeResponse,
     PrintingColorResponse,
-    PostProcessingResponse
+    PostProcessingResponse,
+    CostAddonTierResponse,
+    CostAddonTierSaveRequest,
+    PostProcessingParamResponse,
+    PostProcessingParamSaveRequest,
 )
 from app.services.quote_engine import LiandanQuoteEngine
-from app.models import ProductSize, PrintingColor, PostProcessing, QuoteRecord
+from app.models import ProductSize, PrintingColor, PostProcessing, QuoteRecord, CostAddonTier
 import json
 
 router = APIRouter(prefix="/api/quote", tags=["报价"])
@@ -68,6 +72,11 @@ def calculate_liandan_quote(
         )
         db.add(quote_record)
         db.commit()
+        db.refresh(quote_record)
+
+        # 注入报价ID与时间(后端真实记录，不用前端随机数)
+        result["quote_id"] = f"{quote_record.id:08d}"
+        result["quote_time"] = quote_record.created_at.isoformat() if quote_record.created_at else None
 
         return result
 
@@ -75,6 +84,101 @@ def calculate_liandan_quote(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算报价失败: {str(e)}")
+
+
+@router.get("/cost-addon-tiers", response_model=List[CostAddonTierResponse])
+def get_cost_addon_tiers(category_id: int = 1, db: Session = Depends(get_db)):
+    """获取成本附加阶梯档位（按排序）"""
+    tiers = db.query(CostAddonTier).filter(
+        CostAddonTier.category_id == category_id,
+        CostAddonTier.is_active == True
+    ).order_by(CostAddonTier.sort_order).all()
+    return tiers
+
+
+@router.put("/cost-addon-tiers", response_model=List[CostAddonTierResponse])
+def save_cost_addon_tiers(
+    request: CostAddonTierSaveRequest,
+    db: Session = Depends(get_db)
+):
+    """整表保存成本附加阶梯档位。
+
+    编辑器语义为整表覆盖：先软删该品类现有档位，再按传入顺序重建。
+    区间为半开区间 [min_cost, max_cost)，引擎按此查档
+    （详见 quote_engine._calculate_cost_addon）。
+    """
+    try:
+        # 软删该品类现有档位
+        db.query(CostAddonTier).filter(
+            CostAddonTier.category_id == request.category_id
+        ).update({CostAddonTier.is_active: False})
+
+        created = []
+        for idx, tier in enumerate(request.tiers):
+            row = CostAddonTier(
+                category_id=request.category_id,
+                min_cost=tier.min_cost,
+                max_cost=tier.max_cost,
+                rate=tier.rate,
+                fixed_addon=tier.fixed_addon,
+                sort_order=tier.sort_order if tier.sort_order else idx + 1,
+                is_active=True,
+            )
+            db.add(row)
+            created.append(row)
+
+        db.commit()
+        for row in created:
+            db.refresh(row)
+        return created
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"保存成本附加阶梯失败: {str(e)}")
+
+
+@router.get("/post-processing-params", response_model=List[PostProcessingParamResponse])
+def get_post_processing_params(db: Session = Depends(get_db)):
+    """获取后工参数全表（含禁用行，供参数页编辑），按 sort_order 排序。"""
+    rows = db.query(PostProcessing).order_by(PostProcessing.sort_order).all()
+    return rows
+
+
+@router.put("/post-processing-params", response_model=List[PostProcessingParamResponse])
+def save_post_processing_params(
+    request: PostProcessingParamSaveRequest,
+    db: Session = Depends(get_db)
+):
+    """整表保存后工参数。
+
+    编辑器语义为整表覆盖。注意 post_processing.code 有 UNIQUE 约束，不能用软删
+    （软删后重插同 code 会撞唯一键），因此采用硬删 + 重插（同事务）。
+    引擎按 group_code + 成品开数(kai) 选档，见 quote_engine._resolve_processing。
+    """
+    try:
+        db.query(PostProcessing).delete()
+        created = []
+        for idx, item in enumerate(request.params):
+            row = PostProcessing(
+                name=item.name,
+                code=item.code,
+                group_code=item.group_code,
+                price_type=item.price_type,
+                unit_price=item.unit_price,
+                min_charge=item.min_charge,
+                min_kai=item.min_kai,
+                max_kai=item.max_kai,
+                sort_order=item.sort_order if item.sort_order else idx + 1,
+                is_active=item.is_active,
+            )
+            db.add(row)
+            created.append(row)
+        db.commit()
+        for row in created:
+            db.refresh(row)
+        return created
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"保存后工参数失败: {str(e)}")
 
 
 @router.get("/history")

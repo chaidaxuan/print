@@ -4,7 +4,11 @@ import type {
   PrintingColor,
   PostProcessing,
   LiandanQuoteRequest,
-  LiandanQuoteResponse
+  LiandanQuoteResponse,
+  CostAddonTier,
+  CostAddonTierSaveRequest,
+  PostProcessingParam,
+  PostProcessingParamSaveRequest
 } from '@/types/quote'
 
 /**
@@ -40,4 +44,32 @@ export function calculateLiandanQuote(data: LiandanQuoteRequest): Promise<Lianda
  */
 export function getQuoteHistory(limit: number = 20, offset: number = 0): Promise<any> {
   return request.get('/quote/history', { params: { limit, offset } })
+}
+
+/**
+ * 获取成本附加阶梯档位
+ */
+export function getCostAddonTiers(categoryId: number = 1): Promise<CostAddonTier[]> {
+  return request.get('/quote/cost-addon-tiers', { params: { category_id: categoryId } })
+}
+
+/**
+ * 整表保存成本附加阶梯档位
+ */
+export function saveCostAddonTiers(data: CostAddonTierSaveRequest): Promise<CostAddonTier[]> {
+  return request.put('/quote/cost-addon-tiers', data)
+}
+
+/**
+ * 获取后工参数全表
+ */
+export function getPostProcessingParams(): Promise<PostProcessingParam[]> {
+  return request.get('/quote/post-processing-params')
+}
+
+/**
+ * 整表保存后工参数
+ */
+export function savePostProcessingParams(data: PostProcessingParamSaveRequest): Promise<PostProcessingParam[]> {
+  return request.put('/quote/post-processing-params', data)
 }

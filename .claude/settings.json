@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/quote/liandan -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(python -c ' *)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/quote/liandan -H \"Content-Type: application/json\" -d '{\"size_id\":1,\"quantity\":100,\"sheet_count\":3,\"pages_per_book\":99,\"color_code\":\"single_black\",\"gram_weight\":50,\"post_processing\":[\"binding\",\"add_cover\"],\"customer_name\":\"test\",\"product_name\":\"liandan\"}')",
+      "Bash(curl -s http://127.0.0.1:8000/docs)",
+      "Bash(curl -s http://localhost:5173/)",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_run_code_unsafe"
+    ]
+  }
+}

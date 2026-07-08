@@ -142,49 +142,287 @@
       </div>
     </div>
 
-    <!-- 成本明细弹窗 -->
+    <!-- 成本明细弹窗 → 完整报价明细打印单 -->
     <div v-if="showCostDetail" class="modal-overlay" @click="showCostDetail = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>成本明细</h3>
+      <div class="modal-content print-modal" @click.stop id="print-area">
+        <div class="modal-header no-print">
+          <h3>报价价格明细</h3>
+          <button class="btn-print" @click="handlePrint">打印</button>
           <button class="modal-close" @click="showCostDetail = false">×</button>
         </div>
         <div class="modal-body">
-          <table class="detail-table">
+          <!-- ① 标题栏 -->
+          <div class="print-title">
+            <span class="title-text">报价软件功能演示报价系统</span>
+            <span class="demo-notice">给您了解功能演示用的软件，内设置的报价参数和您的实际数据不同，所以计算结果和您手算的会有不同是正常的</span>
+          </div>
+
+          <!-- ② 报价参数区 -->
+          <table class="param-table">
             <tr>
-              <td class="label">纸款：</td>
-              <td>{{ formatPrice(result.cost_breakdown.paper_cost) }}元</td>
+              <td class="label-cell">报价项目：</td>
+              <td>专版联单报价</td>
+              <td class="label-cell">报价Id：</td>
+              <td>{{ result.quote_id || '—' }}</td>
+              <td class="label-cell">报价时间：</td>
+              <td>{{ result.quote_time ? new Date(result.quote_time).toLocaleString('zh-CN') : '—' }}</td>
             </tr>
             <tr>
-              <td class="label">印刷费：</td>
-              <td>{{ formatPrice(result.cost_breakdown.printing_cost) }}元</td>
+              <td class="label-cell" rowspan="2">报价参数：</td>
+              <td>印刷颜色：{{ spec?.colorName || '—' }}</td>
+              <td colspan="4">单 双 面：—</td>
             </tr>
             <tr>
-              <td class="label">后加工费用：</td>
-              <td>{{ formatPrice(result.cost_breakdown.post_processing_cost) }}元</td>
-            </tr>
-            <tr class="total-row">
-              <td class="label">生产成本：</td>
-              <td><strong>{{ formatPrice(result.cost_breakdown.production_cost) }}元</strong></td>
-            </tr>
-            <tr>
-              <td class="label">成本附加：</td>
-              <td>{{ formatPrice(result.cost_breakdown.cost_addon) }}元</td>
-            </tr>
-            <tr class="total-row highlight">
-              <td class="label">总成本：</td>
-              <td><strong>{{ formatPrice(result.cost_breakdown.total_cost) }}元</strong></td>
+              <td>其它参数：联数({{ formData.sheet_count || 1 }})</td>
+              <td colspan="4">后道工序：{{ spec?.processing || '无' }}</td>
             </tr>
           </table>
 
-          <div class="machine-info">
-            <h4>机器信息</h4>
-            <p>机器名称：{{ result.machine_info.name }}</p>
-            <p>印刷尺寸：{{ result.machine_info.printing_size }}</p>
-            <p>版数：{{ result.machine_info.plates }}</p>
-            <p>每版拼数：{{ result.machine_info.pieces_per_plate }}</p>
-            <p>印张数：{{ result.machine_info.sheets_to_print }}</p>
-            <p>买纸数：{{ result.machine_info.paper_sheets }}</p>
+          <!-- ③ 专版联单成品 -->
+          <table class="product-table">
+            <tr>
+              <td class="label-cell" rowspan="2">专版联单成品：</td>
+              <td class="sub-label">尺寸</td>
+              <td class="sub-label">数量</td>
+              <td class="sub-label">材料</td>
+            </tr>
+            <tr>
+              <td>{{ spec?.sizeName || '—' }}</td>
+              <td>{{ result.quantity }}</td>
+              <td>{{ spec?.material || '—' }}</td>
+            </tr>
+          </table>
+
+          <!-- ④ 合计(重量/体积留空) -->
+          <table class="summary-table">
+            <tr>
+              <td class="label-cell">合计：</td>
+              <td>重量：{{ result.weight_kg ? `约${result.weight_kg.toFixed(2)}公斤` : '—' }}</td>
+              <td>体积：{{ result.volume_m3 ? `约${result.volume_m3.toFixed(2)}立方米` : '—' }}</td>
+            </tr>
+          </table>
+
+          <!-- ⑤ 成本汇总(2行3列) -->
+          <table class="cost-summary-table">
+            <tr>
+              <td class="label-cell">纸款：</td>
+              <td>{{ cb.paper_cost }}</td>
+              <td class="label-cell">印刷费：</td>
+              <td>{{ cb.printing_cost }}</td>
+              <td class="label-cell">后加工费用：</td>
+              <td>{{ cb.post_processing_cost }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">生产成本：</td>
+              <td>{{ cb.production_cost }}</td>
+              <td class="label-cell">成本附加：</td>
+              <td>{{ cb.cost_addon }}</td>
+              <td class="label-cell">总成本：</td>
+              <td class="total-cost">¥{{ cb.total_cost }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">报价单价：</td>
+              <td>{{ result.unit_price.toFixed(2) }}</td>
+              <td class="label-cell">报价总价：</td>
+              <td colspan="3">{{ result.total_price }}</td>
+            </tr>
+          </table>
+
+          <!-- ⑤.5 整体计算公式说明(大公式) -->
+          <div class="overall-formula">
+            <h4 class="formula-title">📐 整体计算公式</h4>
+            <div class="formula-flow">
+              <div class="formula-step">
+                <span class="step-num">1</span>
+                <div class="step-content">
+                  <strong>总页数</strong> = 数量 × 每本页数
+                  <div class="step-example">{{ result.quantity }} × {{ trace ? trace.formula_chain.find(s=>s.key==='total_pages')?.result || '?' : '?' }} 页</div>
+                </div>
+              </div>
+              <div class="formula-arrow">↓</div>
+              <div class="formula-step">
+                <span class="step-num">2</span>
+                <div class="step-content">
+                  <strong>每版印数</strong> = ⌈总页数 ÷ 每版拼数⌉
+                  <div class="step-example">⌈ 总页 ÷ {{ mi.pieces_per_plate }} ⌉ = {{ mi.sheets_to_print }} 张</div>
+                </div>
+              </div>
+              <div class="formula-arrow">↓</div>
+              <div class="formula-step">
+                <span class="step-num">3</span>
+                <div class="step-content">
+                  <strong>买纸数</strong> = ⌈(每版印数 + 放数) ÷ 每全张可开数⌉
+                  <div class="step-example">⌈({{ mi.sheets_to_print }} + {{ mi.spoilage || 100 }}) ÷ {{ trace ? trace.imposition.per_full : '?' }}⌉ = {{ mi.paper_sheets }} 全张</div>
+                </div>
+              </div>
+              <div class="formula-arrow">↓</div>
+              <div class="formula-step">
+                <span class="step-num">4</span>
+                <div class="step-content">
+                  <strong>纸款</strong> = 全张单价 × 买纸数
+                  <div class="step-example">{{ cb.paper_cost }} 元</div>
+                </div>
+              </div>
+              <div class="formula-arrow">➕</div>
+              <div class="formula-step">
+                <span class="step-num">5</span>
+                <div class="step-content">
+                  <strong>印刷费</strong> = 版数 × (开机费 + 每版印数÷1000 × 千印价)
+                  <div class="step-example">{{ mi.plates }} 版 × (...) = {{ cb.printing_cost }} 元</div>
+                </div>
+              </div>
+              <div class="formula-arrow">➕</div>
+              <div class="formula-step">
+                <span class="step-num">6</span>
+                <div class="step-content">
+                  <strong>后加工费</strong> = Σ max(单价×数量, 最低消费)
+                  <div class="step-example">{{ postItemsText }}</div>
+                </div>
+              </div>
+              <div class="formula-arrow">=</div>
+              <div class="formula-step highlight">
+                <span class="step-num">7</span>
+                <div class="step-content">
+                  <strong>生产成本</strong> = 纸款 + 印刷费 + 后加工
+                  <div class="step-example">{{ cb.paper_cost }} + {{ cb.printing_cost }} + {{ cb.post_processing_cost }} = <strong>{{ cb.production_cost }} 元</strong></div>
+                </div>
+              </div>
+              <div class="formula-arrow">➕</div>
+              <div class="formula-step">
+                <span class="step-num">8</span>
+                <div class="step-content">
+                  <strong>成本附加</strong> = 生产成本 × 阶梯附加率
+                  <div class="step-example">{{ cb.production_cost }} × {{ addonRate }} = <strong>{{ cb.cost_addon }} 元</strong></div>
+                </div>
+              </div>
+              <div class="formula-arrow">=</div>
+              <div class="formula-step highlight final">
+                <span class="step-num">9</span>
+                <div class="step-content">
+                  <strong>总成本</strong> = 生产成本 + 成本附加
+                  <div class="step-example">{{ cb.production_cost }} + {{ cb.cost_addon }} = <strong class="final-price">¥{{ cb.total_cost }}</strong></div>
+                </div>
+              </div>
+              <div class="formula-arrow">÷</div>
+              <div class="formula-step highlight">
+                <span class="step-num">10</span>
+                <div class="step-content">
+                  <strong>报价单价</strong> = 总成本 ÷ 数量
+                  <div class="step-example">{{ cb.total_cost }} ÷ {{ result.quantity }} = <strong>{{ result.unit_price.toFixed(3) }} 元/本</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑥ 工序明细大表 -->
+          <div class="process-detail">
+            <table class="process-table">
+              <thead>
+                <tr>
+                  <th>工序</th>
+                  <th>机器名称</th>
+                  <th>开纸尺寸</th>
+                  <th>印刷方式</th>
+                  <th>版数</th>
+                  <th>每版拼数</th>
+                  <th>每版印数</th>
+                  <th>印刷纸</th>
+                  <th>纸款</th>
+                  <th>印工费</th>
+                  <th>小计</th>
+                  <th>买纸尺寸</th>
+                  <th>开纸类型</th>
+                  <th>买纸数</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 印刷行 -->
+                <tr>
+                  <td>印刷1</td>
+                  <td>{{ mi.name }}</td>
+                  <td>{{ mi.printing_size }}</td>
+                  <td>—</td>
+                  <td>{{ mi.plates }}</td>
+                  <td>{{ mi.pieces_per_plate }}</td>
+                  <td>{{ mi.sheets_to_print }}</td>
+                  <td>{{ mi.sheets_to_print }}+{{ mi.spoilage || 100 }}</td>
+                  <td>¥{{ cb.paper_cost }}</td>
+                  <td>¥{{ cb.printing_cost }}</td>
+                  <td>¥{{ (cb.paper_cost + cb.printing_cost).toFixed(2) }}</td>
+                  <td>{{ result.paper_series || '大度' }}</td>
+                  <td>{{ result.cut_type || '—' }}</td>
+                  <td>{{ mi.paper_sheets }}</td>
+                  <td></td>
+                </tr>
+                <!-- 后加工行 -->
+                <tr v-if="cb.post_processing_cost > 0">
+                  <td>后加工</td>
+                  <td colspan="9">{{ postItemsText }}</td>
+                  <td>¥{{ cb.post_processing_cost }}</td>
+                  <td colspan="4"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ⑦ 计算过程(有 calc_trace 才显示) -->
+          <div v-if="trace" class="calc-trace">
+            <h4>计算过程</h4>
+
+            <!-- 公式链 -->
+            <table class="formula-table">
+              <thead>
+                <tr><th>步骤</th><th>公式</th><th>代入</th><th>结果</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="step in trace.formula_chain" :key="step.key">
+                  <td>{{ step.label }}</td>
+                  <td>{{ step.formula }}</td>
+                  <td>{{ step.substituted }}</td>
+                  <td>{{ step.result }} {{ step.unit || '' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- 拼版选择过程 -->
+            <div class="imposition-trace">
+              <h5>拼版选择过程</h5>
+              <p>机器幅面：{{ imp.press_w }}×{{ imp.press_h }} mm</p>
+              <table class="cut-levels-table">
+                <thead>
+                  <tr><th>级别</th><th>尺寸</th><th>能否上机</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="lv in imp.cut_levels" :key="lv.per_full" :class="{ selected: lv.selected }">
+                    <td>{{ lv.level_name }}</td>
+                    <td>{{ lv.cut_w }}×{{ lv.cut_h }}</td>
+                    <td>{{ lv.fits ? '✓' : '✗' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="reason">{{ imp.reason }}</p>
+            </div>
+
+            <!-- 后加工逐项 -->
+            <div v-if="trace.post_processing_items.length" class="post-items-trace">
+              <h5>后加工明细</h5>
+              <table class="post-items-table">
+                <thead>
+                  <tr><th>名称</th><th>单价</th><th>数量</th><th>原始费用</th><th>最低消费</th><th>实收费用</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, i) in trace.post_processing_items" :key="i">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.unit_price }} {{ item.unit_label }}</td>
+                    <td>{{ item.qty }} {{ item.qty_basis }}</td>
+                    <td>{{ item.raw_cost }}</td>
+                    <td>{{ item.min_charge }}</td>
+                    <td>{{ item.cost }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -243,8 +481,36 @@ const selectedType = ref('cost')
 const remark = ref('')
 const showCostDetail = ref(false)
 
-// 报价ID：进入结果页时生成一次，避免每次渲染都变化
-const quoteId = ref(Math.floor(Math.random() * 90000000) + 10000000)
+// 报价ID：由后端注入,删掉前端随机数(已改为后端真实记录)
+
+// —— 成本明细弹窗新增计算属性 ——
+const cb = computed(() => props.result.cost_breakdown)
+const mi = computed(() => props.result.machine_info)
+const trace = computed(() => props.result.calc_trace)
+const imp = computed(() => trace.value?.imposition)
+const formData = computed(() => ({ sheet_count: 3 })) // 临时兼容,待父组件传入
+
+const postItemsText = computed(() => {
+  const items = props.result.post_processing_items
+  if (!items || !items.length) return '无'
+  return items.map(i => `${i.name}(${i.cost})`).join(', ')
+})
+
+// 阶梯附加率：优先从计算轨迹的 cost_addon 步骤解析(与后端表格一致),
+// 取不到则用 成本附加 ÷ 生产成本 反算
+const addonRate = computed(() => {
+  const step = trace.value?.formula_chain?.find(s => s.key === 'cost_addon')
+  if (step?.substituted) {
+    const m = step.substituted.match(/×\s*([\d.]+)/)
+    if (m) return m[1]
+  }
+  const prod = cb.value.production_cost
+  return prod ? (cb.value.cost_addon / prod).toFixed(4) : '0'
+})
+
+const handlePrint = () => {
+  window.print()
+}
 
 const formatPrice = (price: number) => {
   return price.toFixed(2)
@@ -254,7 +520,7 @@ const summaryText = computed(() => {
   const r = props.result
   const s = props.spec
   return [
-    `【专版联单】报价ID:${quoteId.value}`,
+    `【专版联单】报价ID:${r.quote_id || '—'}`,
     `规格：${s?.sizeName || r.machine_info.printing_size}`,
     `材质：${s?.material || '无碳纸'}`,
     `数量：${r.quantity}本`,
@@ -549,21 +815,24 @@ const handleCopy = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+  padding: 20px;
 }
 
 .modal-content {
   background: white;
   border-radius: var(--border-radius-lg);
   width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
+  max-width: 960px;
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 10000;
 }
 
 .modal-header {
@@ -639,6 +908,63 @@ const handleCopy = () => {
   font-size: var(--font-size-sm);
 }
 
+.all-machines {
+  margin-top: var(--spacing-lg);
+}
+
+.all-machines h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-md);
+}
+
+.machines-table-wrap {
+  overflow-x: auto;
+}
+
+.machines-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.machines-table th,
+.machines-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--table-border);
+  text-align: center;
+}
+
+.machines-table thead {
+  background: var(--table-header-bg);
+  color: var(--table-header-text);
+}
+
+.machines-table td:first-child {
+  text-align: left;
+}
+
+.machines-table tbody tr.recommended {
+  background: #fff7e6;
+  font-weight: 600;
+}
+
+.machines-table .total-cell {
+  color: var(--danger-color, #e4393c);
+  font-weight: 600;
+}
+
+.rec-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: white;
+  background: var(--danger-color, #e4393c);
+  border-radius: 3px;
+}
+
 @media (max-width: 768px) {
   .toolbar {
     padding: var(--spacing-md);
@@ -678,6 +1004,459 @@ const handleCopy = () => {
 
   .total-price-input {
     width: 100%;
+  }
+}
+
+/* ============== 打印单样式 ============== */
+.modal-body {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  max-height: calc(90vh - 80px);
+}
+
+.total-cost {
+  color: #e63946;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* ======== 整体计算公式样式 ======== */
+.overall-formula {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.formula-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 var(--spacing-md) 0;
+  text-align: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.formula-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formula-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #64748b;
+}
+
+.formula-step.highlight {
+  border-left-color: #16a34a;
+  background: #f6fdf9;
+}
+
+.formula-step.final {
+  border-left-color: #dc2626;
+  background: #fef7f7;
+  border-color: #f0c2c2;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  background: #64748b;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.formula-step.highlight .step-num {
+  background: #16a34a;
+}
+
+.formula-step.final .step-num {
+  background: #dc2626;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content strong {
+  color: #334155;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.step-example {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid #e2e8f0;
+}
+
+.formula-step.highlight .step-example strong,
+.formula-step.final .step-example strong {
+  color: #16a34a;
+  font-size: 14px;
+}
+
+.final-price {
+  color: #dc2626 !important;
+  font-size: 18px !important;
+}
+
+.formula-arrow {
+  text-align: center;
+  font-size: 15px;
+  color: #94a3b8;
+  padding: 2px 0;
+}
+
+/* ======== 打印单整体美化 ======== */
+.print-modal .modal-content {
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  border-radius: 8px;
+}
+
+.print-title {
+  text-align: center;
+  padding: 18px var(--spacing-md);
+  background: #334155;
+  color: white;
+  margin: calc(var(--spacing-md) * -1) calc(var(--spacing-md) * -1) var(--spacing-lg);
+  border-radius: 8px 8px 0 0;
+}
+
+.title-text {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.demo-notice {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.5;
+  display: block;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.param-table,
+.product-table,
+.summary-table,
+.cost-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.param-table td,
+.product-table td,
+.summary-table td,
+.cost-summary-table td {
+  border: 1px solid #e2e8f0;
+  padding: 9px 14px;
+  color: #334155;
+}
+
+.label-cell {
+  background: #f1f5f9;
+  font-weight: 600;
+  text-align: right;
+  width: 120px;
+  color: #475569;
+}
+
+.sub-label {
+  background: #f8fafc;
+  font-weight: 600;
+  text-align: center;
+  color: #475569;
+}
+
+.process-detail {
+  margin: var(--spacing-md) 0;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.process-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1000px;
+  background: white;
+}
+
+.process-table th,
+.process-table td {
+  border: 1px solid #e2e8f0;
+  padding: 9px 8px;
+  text-align: center;
+  color: #334155;
+}
+
+.process-table th {
+  background: #334e68;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.process-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.calc-trace {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.calc-trace h4 {
+  font-size: 17px;
+  margin: 0 0 var(--spacing-md);
+  color: #1e293b;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid #334e68;
+}
+
+.calc-trace h5 {
+  font-size: 15px;
+  margin: var(--spacing-lg) 0 var(--spacing-sm);
+  color: #334155;
+  padding-left: var(--spacing-sm);
+  border-left: 3px solid #334e68;
+}
+
+.formula-table,
+.cut-levels-table,
+.post-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-sm) 0;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.formula-table th,
+.formula-table td,
+.cut-levels-table th,
+.cut-levels-table td,
+.post-items-table th,
+.post-items-table td {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+}
+
+.formula-table th,
+.cut-levels-table th,
+.post-items-table th {
+  background: #64748b;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.formula-table tbody tr:hover,
+.cut-levels-table tbody tr:hover,
+.post-items-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.cut-levels-table tr.selected {
+  background: #ecfdf5;
+  font-weight: 600;
+  border-left: 3px solid #10b981;
+}
+
+.imposition-trace .reason {
+  color: #475569;
+  font-style: italic;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+}
+
+.btn-print {
+  padding: 8px 20px;
+  background: #334e68;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: var(--spacing-sm);
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.btn-print:hover {
+  background: #243b53;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #243b53;
+  flex: 1;
+}
+
+/* 打印样式 */
+@media print {
+  /* 隐藏所有非打印内容 */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 折叠打印区之外的所有内容高度,避免它们撑出多余空白页 */
+  .quote-result > *:not(.modal-overlay) {
+    display: none !important;
+  }
+
+  /* 只显示打印区域 */
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+
+  /* 关键修复：打印时移除 fixed 定位,改为静态流式布局 */
+  .modal-overlay {
+    position: static !important;
+    background: none !important;
+    display: block !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* #print-area 用 absolute 提到页首,叠在已隐藏(但仍占位)的表单之上,
+     避免 fixed 定位在每页重复,也避免前面留出空白页 */
+  .print-modal.modal-content,
+  #print-area {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  .modal-body {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 10mm !important;
+  }
+
+  /* 隐藏打印按钮和关闭按钮 */
+  .no-print {
+    display: none !important;
+  }
+
+  /* 分页优化 */
+  .overall-formula {
+    page-break-inside: auto;
+  }
+
+  .formula-step {
+    page-break-inside: avoid;
+  }
+
+  .process-detail {
+    page-break-before: auto;
+    page-break-inside: auto;
+  }
+
+  .calc-trace {
+    page-break-before: auto;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* 缩小打印时的字号和间距,让内容更紧凑 */
+  .modal-body {
+    font-size: 11pt !important;
+  }
+
+  h4 {
+    font-size: 14pt !important;
+    margin: 3mm 0 2mm 0 !important;
+  }
+
+  h5 {
+    font-size: 12pt !important;
+    margin: 2mm 0 1mm 0 !important;
+  }
+
+  /* 打印时优化标题栏 */
+  .print-title {
+    margin: 0 0 5mm 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* 打印时优化表格间距 */
+  .param-table,
+  .product-table,
+  .summary-table,
+  .cost-summary-table {
+    margin: 3mm 0 !important;
   }
 }
 </style>

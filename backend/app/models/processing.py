@@ -9,6 +9,11 @@ class PriceType(str, enum.Enum):
     FIXED = "fixed"
     PER_UNIT = "per_unit"
     PER_THOUSAND = "per_thousand"
+    # 参考站四个计价单位
+    PER_BOOK = "per_book"                # 元/本  → × quantity(本数)
+    PER_PLATE = "per_plate"              # 元/版  → × plate_count(版数)
+    PER_PAGE = "per_page"                # 元/页  → × total_pages(总页数)
+    PER_SHEET_COUNT = "per_sheet_count"  # 元/联  → × sheet_count(联数)
 
 
 class PostProcessing(Base):
@@ -26,7 +31,15 @@ class PostProcessing(Base):
         comment="计价方式",
     )
     unit_price = Column(DECIMAL(10, 4), nullable=False, comment="单价")
-    min_charge = Column(DECIMAL(10, 2), default=0, comment="最低收费")
+    min_charge = Column(DECIMAL(10, 2), default=0, comment="最低收费(最低消费/开机费)")
+    group_code = Column(
+        String(50),
+        index=True,
+        comment="前端勾选分组，如 add_card/binding；单档项 group_code 即 code 本身",
+    )
+    min_kai = Column(Integer, comment="开数档下限(含)，仅展示；NULL=不限")
+    max_kai = Column(Integer, comment="开数档上限(含)，选档用；NULL=最大档(如'50开以上')")
+    sort_order = Column(Integer, default=0, comment="展示排序")
     description = Column(Text, comment="工序说明")
     is_active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())

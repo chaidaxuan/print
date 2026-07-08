@@ -210,8 +210,9 @@
         <div class="panel-head">
           <span class="panel-title">后工参数设置</span>
           <div class="btn-group">
-            <a href="#" class="btn btn-save" @click.prevent>保存</a>
-            <a href="#" class="btn" @click.prevent>初始化参数</a>
+            <a href="#" class="btn btn-save" @click.prevent="savePostParams">
+              {{ postSaving ? '保存中...' : '保存' }}
+            </a>
           </div>
         </div>
         <table class="data-table">
@@ -221,56 +222,25 @@
               <th>单价</th>
               <th></th>
               <th>最低消费(开机费)（元）</th>
-              <th>每张(个)最低单价（元）</th>
-              <th></th>
-              <th>模板费最低收费(元)</th>
-              <th>模板费每拼最低收费(元)</th>
-              <th>计算次数</th>
               <th>状态</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, i) in postProcessing" :key="i">
+            <tr v-for="(row, i) in postParams" :key="i">
               <td>{{ row.name }}</td>
-              <!-- 特殊行：仅有明细链接 -->
-              <template v-if="row.detailOnly">
-                <td colspan="7">
-                  <template v-if="row.diecut">
-                    模切费计算方式:
-                    <label class="ck"><input type="radio" name="diecut" value="1" v-model="diecutMode" /> 一(按张计算)</label>
-                    <label class="ck"><input type="radio" name="diecut" value="2" v-model="diecutMode" /> 二(按千张计算)</label>
-                  </template>
-                  <a href="#" class="link" @click.prevent>查看收费明细</a>
-                </td>
-              </template>
-              <template v-else>
-                <td><input class="ipt ipt-xs" type="text" v-model="row.price" /></td>
-                <td class="unit">{{ row.unit }}</td>
-                <td><input class="ipt ipt-xs" type="text" v-model="row.minCharge" /></td>
-                <td>
-                  <template v-if="row.perMin !== undefined">
-                    <input class="ipt ipt-xs" type="text" v-model="row.perMin" />
-                    <span v-if="row.perMinSuffix"> {{ row.perMinSuffix }}</span>
-                  </template>
-                </td>
-                <td>
-                  <template v-if="row.freeQty !== undefined">
-                    <input class="ipt ipt-xs" type="text" v-model="row.freeQty" /> 个免收费
-                  </template>
-                </td>
-                <td><input v-if="row.tplMin !== undefined" class="ipt ipt-xs" type="text" v-model="row.tplMin" /></td>
-                <td><input v-if="row.tplPerMin !== undefined" class="ipt ipt-xs" type="text" v-model="row.tplPerMin" /></td>
-                <td>{{ row.calcCount }}</td>
-              </template>
+              <td><input class="ipt ipt-xs" type="text" v-model="row.unit_price" /></td>
+              <td class="unit">{{ unitLabel(row.price_type) }}</td>
+              <td><input class="ipt ipt-xs" type="text" v-model="row.min_charge" /></td>
               <td>
-                <select :disabled="row.statusLocked">
-                  <option selected>可用</option>
-                  <option>禁用</option>
+                <select v-model="row.is_active">
+                  <option :value="true">可用</option>
+                  <option :value="false">禁用</option>
                 </select>
               </td>
             </tr>
           </tbody>
         </table>
+        <p class="service-tip">模切 / 其他后工 / 打包 / 运费为明细项，本期不参与算价。</p>
       </section>
 
       <!-- Tab5：成本附加设置 -->
@@ -278,8 +248,10 @@
         <div class="panel-head">
           <span class="panel-title">成本附加设置</span>
           <div class="btn-group">
-            <a href="#" class="btn btn-save" @click.prevent>保存</a>
-            <a href="#" class="btn" @click.prevent>增加行</a>
+            <a href="#" class="btn btn-save" @click.prevent="saveCostTiers">
+              {{ costSaving ? '保存中...' : '保存' }}
+            </a>
+            <a href="#" class="btn" @click.prevent="addCostRow">增加行</a>
           </div>
         </div>
         <table class="data-table">
@@ -310,7 +282,7 @@
               <td><input class="ipt ipt-xs" type="text" v-model="seg.fixed" /></td>
               <td>{{ seg.desc }}</td>
               <td class="op">
-                <a v-if="seg.removable" href="#" class="link" @click.prevent>删除</a>
+                <a v-if="seg.removable" href="#" class="link" @click.prevent="removeCostRow(i)">删除</a>
               </td>
             </tr>
           </tbody>
@@ -322,7 +294,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import {
+  getCostAddonTiers,
+  saveCostAddonTiers,
+  getPostProcessingParams,
+  savePostProcessingParams
+} from '@/api/quote'
+import type { CostAddonTierInput, PostProcessingParam } from '@/types/quote'
+
+const CATEGORY_ID = 1
 
 const tabs = [
   { key: 'base', label: '专版无碳联单参数' },
@@ -368,27 +349,59 @@ const papers = reactive([
   { gram: '108', duUp: '480', duMid: '590', duDown: '480', zhengUp: '300', zhengMid: '4900', zhengDown: '300', useDu: true, useZheng: true, useSpecial: false, isDefault: false }
 ])
 
-// Tab4 —— 后工
-const diecutMode = ref('1')
-const postProcessing = reactive<any[]>([
-  { name: '加卡纸(10开-8开)', price: '0.4', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: false },
-  { name: '加卡纸(11开-18开)', price: '0.2', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: true },
-  { name: '加卡纸(20开-50开)', price: '0.2', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: true },
-  { name: '加卡纸(50开以上)', price: '0.2', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: true },
-  { name: '加封面', price: '0.3', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: false },
-  { name: '印封面', price: '0.3', unit: '元/本', minCharge: '30', calcCount: '0', statusLocked: false },
-  { name: '压点线', price: '0.01', unit: '元/版', minCharge: '30', tplMin: '30', calcCount: '0', statusLocked: false },
-  { name: '彩色联单加号码', price: '0.02', unit: '元/页', minCharge: '0', perMin: '0', perMinSuffix: '单黑', freeQty: '0', calcCount: '0', statusLocked: false },
-  { name: '装订(10开-8开)', price: '0.3', unit: '元/本', minCharge: '20', calcCount: '0', statusLocked: true },
-  { name: '装订(11开-18开)', price: '0.3', unit: '元/本', minCharge: '20', calcCount: '0', statusLocked: true },
-  { name: '装订(20开-50开)', price: '0.1', unit: '元/本', minCharge: '20', calcCount: '9', statusLocked: true },
-  { name: '装订(50开以上)', price: '0.1', unit: '元/本', minCharge: '20', calcCount: '0', statusLocked: true },
-  { name: '换边联字', price: '10', unit: '元/联', minCharge: '30', perMin: '0', calcCount: '0', statusLocked: false },
-  { name: '模切', detailOnly: true, diecut: true, statusLocked: true },
-  { name: '其他后工', detailOnly: true, statusLocked: false },
-  { name: '打包', detailOnly: true, statusLocked: false },
-  { name: '运费', detailOnly: true, statusLocked: true }
-])
+// Tab4 —— 后工参数（接后端）
+const postParams = reactive<PostProcessingParam[]>([])
+const postSaving = ref(false)
+
+// 计价单位 -> 中文标签
+const UNIT_LABELS: Record<string, string> = {
+  per_book: '元/本',
+  per_plate: '元/版',
+  per_page: '元/页',
+  per_sheet_count: '元/联',
+  per_unit: '元/个',
+  per_thousand: '元/千',
+  fixed: '元/次'
+}
+function unitLabel(priceType: string): string {
+  return UNIT_LABELS[priceType] || priceType
+}
+
+async function loadPostParams() {
+  try {
+    const rows = await getPostProcessingParams()
+    postParams.splice(0, postParams.length, ...rows)
+  } catch (e: any) {
+    console.error('加载后工参数失败:', e?.message || e)
+  }
+}
+
+async function savePostParams() {
+  if (postSaving.value) return
+  postSaving.value = true
+  try {
+    // 单价/最低消费在输入框里可能变成字符串，落库前转数字
+    const params = postParams.map((r) => ({
+      name: r.name,
+      code: r.code,
+      group_code: r.group_code,
+      price_type: r.price_type,
+      unit_price: Number(r.unit_price) || 0,
+      min_charge: Number(r.min_charge) || 0,
+      min_kai: r.min_kai,
+      max_kai: r.max_kai,
+      sort_order: r.sort_order,
+      is_active: r.is_active
+    }))
+    const saved = await savePostProcessingParams({ params })
+    postParams.splice(0, postParams.length, ...saved)
+    alert('后工参数已保存')
+  } catch (e: any) {
+    alert('保存失败：' + (e?.message || e))
+  } finally {
+    postSaving.value = false
+  }
+}
 
 // Tab5 —— 成本附加
 const cost = reactive({
@@ -396,18 +409,148 @@ const cost = reactive({
   byQty: false,
   excludePaper: false
 })
-const costSegments = reactive([
-  { label: '第1段', start: '0', end: '1000', endLocked: false, rate: '10.0', fixed: '200', desc: '第1段金额范围利率', removable: false },
-  { label: '第2段', start: '1001', end: '3000', endLocked: false, rate: '10.0', fixed: '150', desc: '第2段金额范围利率', removable: true },
-  { label: '第3段', start: '3001', end: '5000', endLocked: false, rate: '10.0', fixed: '0', desc: '第3段金额范围利率', removable: true },
-  { label: '第4段', start: '5001', end: '10000', endLocked: false, rate: '10.0', fixed: '0', desc: '第4段金额范围利率', removable: true },
-  { label: '第5段', start: '10001', end: '0', endLocked: false, rate: '10.0', fixed: '0', desc: '第5段金额范围利率', removable: true },
-  { label: '第6段', start: '1', end: '0', endLocked: false, rate: '10.0', fixed: '0', desc: '第6段金额范围利率', removable: true },
-  { label: '第7段', start: '1', end: '0', endLocked: false, rate: '10.0', fixed: '0', desc: '第7段金额范围利率', removable: true },
-  { label: '第8段', start: '1', end: '0', endLocked: false, rate: '10.0', fixed: '0', desc: '第8段金额范围利率', removable: true },
-  { label: '第9段', start: '1', end: '0', endLocked: false, rate: '10.0', fixed: '0', desc: '第9段金额范围利率', removable: true },
-  { label: '第10段', start: '最大结束数量', end: '无限大', endLocked: true, rate: '10.0', fixed: '0', desc: '第10段金额范围利率', removable: false }
-])
+
+interface CostSegment {
+  label: string
+  start: string   // 区间下限，仅展示（= 上一段 end）
+  end: string     // 区间上限，唯一可编辑边界；最后一段为无限大
+  endLocked: boolean
+  rate: string    // 附加比率，百分比字符串（如 '10.0'）
+  fixed: string   // 固定值（元）
+  desc: string
+  removable: boolean
+}
+
+const costSegments = reactive<CostSegment[]>([])
+const costSaving = ref(false)
+
+// 后端档位 -> 界面段。后端为半开区间 [min_cost, max_cost)，
+// 界面 start 显示为该段下限，end 显示为上限（无上限段显示“无限大”）。
+function tiersToSegments(tiers: { min_cost: number; max_cost: number | null; rate: number; fixed_addon: number }[]): CostSegment[] {
+  if (!tiers.length) return [defaultSegment(1, true)]
+  return tiers.map((t, i) => {
+    const isLast = t.max_cost === null || t.max_cost === undefined
+    return {
+      label: `第${i + 1}段`,
+      start: String(t.min_cost),
+      end: isLast ? '无限大' : String(t.max_cost),
+      endLocked: isLast,
+      rate: (t.rate * 100).toFixed(1),
+      fixed: String(t.fixed_addon ?? 0),
+      desc: `第${i + 1}段金额范围利率`,
+      removable: i > 0 && !isLast
+    }
+  })
+}
+
+function defaultSegment(index: number, isLast = false): CostSegment {
+  return {
+    label: `第${index}段`,
+    start: '0',
+    end: isLast ? '无限大' : '0',
+    endLocked: isLast,
+    rate: '10.0',
+    fixed: '0',
+    desc: `第${index}段金额范围利率`,
+    removable: index > 1 && !isLast
+  }
+}
+
+// 界面段 -> 后端档位。以每段 end 作为唯一边界源：
+// 第 i 段 min_cost = 上一段 end（首段为 0），max_cost = 本段 end（末段为 null），
+// 从根本上规避“1001 vs 1000”这种边界缝隙。
+function segmentsToTiers(): CostAddonTierInput[] {
+  const tiers: CostAddonTierInput[] = []
+  let prevEnd = 0
+  costSegments.forEach((seg, i) => {
+    const isLast = seg.endLocked
+    const rate = parseFloat(seg.rate)
+    const fixed = parseFloat(seg.fixed)
+    tiers.push({
+      min_cost: prevEnd,
+      max_cost: isLast ? null : Number(seg.end),
+      rate: isNaN(rate) ? 0 : rate / 100,
+      fixed_addon: isNaN(fixed) ? 0 : fixed,
+      sort_order: i + 1
+    })
+    if (!isLast) prevEnd = Number(seg.end)
+  })
+  return tiers
+}
+
+function relabelSegments() {
+  costSegments.forEach((seg, i) => {
+    seg.label = `第${i + 1}段`
+    seg.desc = `第${i + 1}段金额范围利率`
+    // 下限跟随上一段上限，保持展示一致
+    seg.start = i === 0 ? '0' : costSegments[i - 1].end
+    seg.removable = i > 0 && !seg.endLocked
+  })
+}
+
+function addCostRow() {
+  // 在“无限大”末段之前插入一行
+  const lastLocked = costSegments.length && costSegments[costSegments.length - 1].endLocked
+  const insertAt = lastLocked ? costSegments.length - 1 : costSegments.length
+  costSegments.splice(insertAt, 0, defaultSegment(insertAt + 1))
+  relabelSegments()
+}
+
+function removeCostRow(index: number) {
+  costSegments.splice(index, 1)
+  relabelSegments()
+}
+
+async function loadCostTiers() {
+  try {
+    const tiers = await getCostAddonTiers(CATEGORY_ID)
+    costSegments.splice(0, costSegments.length, ...tiersToSegments(tiers))
+    // 确保存在无限大末段
+    if (!costSegments.some(s => s.endLocked)) {
+      costSegments.push(defaultSegment(costSegments.length + 1, true))
+    }
+    relabelSegments()
+  } catch (e: any) {
+    console.error('加载成本附加档位失败:', e?.message || e)
+  }
+}
+
+async function saveCostTiers() {
+  if (costSaving.value) return
+  const tiers = segmentsToTiers()
+
+  // 基本校验：非末段的 end 必须递增且为正数
+  let prev = 0
+  for (const t of tiers) {
+    if (t.max_cost !== null) {
+      if (t.max_cost <= prev) {
+        alert(`区间上限必须递增：${t.max_cost} 应大于 ${prev}`)
+        return
+      }
+      prev = t.max_cost
+    }
+  }
+
+  costSaving.value = true
+  try {
+    const saved = await saveCostAddonTiers({ category_id: CATEGORY_ID, tiers })
+    costSegments.splice(0, costSegments.length, ...tiersToSegments(saved))
+    if (!costSegments.some(s => s.endLocked)) {
+      costSegments.push(defaultSegment(costSegments.length + 1, true))
+    }
+    relabelSegments()
+    alert('成本附加档位已保存')
+  } catch (e: any) {
+    alert('保存失败：' + (e?.message || e))
+  } finally {
+    costSaving.value = false
+  }
+}
+
+onMounted(() => {
+  loadCostTiers()
+  loadPostParams()
+})
 </script>
 
 <style scoped>

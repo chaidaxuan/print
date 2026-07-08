@@ -106,7 +106,7 @@ const formData = ref<LiandanQuoteRequest>({
   pages_per_book: 99,
   color_code: 'single_black',
   gram_weight: 50,
-  post_processing: ['binding_left'],
+  post_processing: ['binding'],
   customer_name: '',
   product_name: ''
 })
@@ -118,13 +118,15 @@ const quoteSpec = ref<QuoteSpec>({})
 const sizes = ref<ProductSize[]>([])
 const colors = ref<PrintingColor[]>([])
 
-// 后道工序代码 → 中文标签
+// 后道工序分组代码 → 中文标签（与后端 group_code、QuoteForm 勾选 value 对齐）
 const processingLabels: Record<string, string> = {
-  binding_left: '装订(胶左)',
-  binding_top: '装订(胶头)',
-  numbering: '打号码',
+  binding: '装订',
+  add_card: '加卡纸',
+  add_cover: '加封面',
+  print_cover: '印封面',
   creasing: '压痕压点线',
-  add_cover: '加封面'
+  numbering: '彩色联单加号码',
+  edge_words: '换边联字'
 }
 
 const buildSpec = (data: LiandanQuoteRequest): QuoteSpec => {
