@@ -1024,19 +1024,20 @@ const handleCopy = () => {
 .overall-formula {
   margin: var(--spacing-lg) 0;
   padding: var(--spacing-lg);
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 2px solid #4a90e2;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .formula-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #334155;
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
   margin: 0 0 var(--spacing-md) 0;
   text-align: center;
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid #cbd5e1;
+  border-bottom: 2px solid #4a90e2;
 }
 
 .formula-flow {
@@ -1049,44 +1050,51 @@ const handleCopy = () => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: white;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #64748b;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.formula-step:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .formula-step.highlight {
-  border-left-color: #16a34a;
-  background: #f6fdf9;
+  border-left-color: #28a745;
+  background: linear-gradient(90deg, #f0fff4 0%, white 100%);
 }
 
 .formula-step.final {
-  border-left-color: #dc2626;
-  background: #fef7f7;
-  border-color: #f0c2c2;
+  border-left-color: #e63946;
+  background: linear-gradient(90deg, #fff5f5 0%, white 100%);
+  border: 2px solid #e63946;
 }
 
 .step-num {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  background: #64748b;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 13px;
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
 }
 
 .formula-step.highlight .step-num {
-  background: #16a34a;
+  background: linear-gradient(135deg, #28a745, #1e7e34);
 }
 
 .formula-step.final .step-num {
-  background: #dc2626;
+  background: linear-gradient(135deg, #e63946, #c82333);
 }
 
 .step-content {
@@ -1094,36 +1102,37 @@ const handleCopy = () => {
 }
 
 .step-content strong {
-  color: #334155;
-  font-size: 14px;
+  color: #2c3e50;
+  font-size: 15px;
   display: block;
   margin-bottom: 4px;
 }
 
 .step-example {
-  color: #64748b;
+  color: #6c757d;
   font-size: 13px;
   margin-top: 4px;
   padding-left: 8px;
-  border-left: 2px solid #e2e8f0;
+  border-left: 2px solid #dee2e6;
 }
 
 .formula-step.highlight .step-example strong,
 .formula-step.final .step-example strong {
-  color: #16a34a;
-  font-size: 14px;
+  color: #28a745;
+  font-size: 15px;
 }
 
 .final-price {
-  color: #dc2626 !important;
-  font-size: 18px !important;
+  color: #e63946 !important;
+  font-size: 20px !important;
 }
 
 .formula-arrow {
   text-align: center;
-  font-size: 15px;
-  color: #94a3b8;
-  padding: 2px 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a90e2;
+  padding: 4px 0;
 }
 
 /* ======== 打印单整体美化 ======== */
@@ -1137,28 +1146,26 @@ const handleCopy = () => {
 
 .print-title {
   text-align: center;
-  padding: 18px var(--spacing-md);
-  background: #334155;
+  padding: var(--spacing-md) 0;
+  border-bottom: 3px solid #2c3e50;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  margin: calc(var(--spacing-md) * -1) calc(var(--spacing-md) * -1) var(--spacing-lg);
+  margin: calc(var(--spacing-md) * -1) calc(var(--spacing-md) * -1) var(--spacing-md);
   border-radius: 8px 8px 0 0;
 }
 
 .title-text {
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 22px;
+  font-weight: bold;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--spacing-xs);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 .demo-notice {
   font-size: 12px;
-  color: #cbd5e1;
-  line-height: 1.5;
+  color: #ffe0e0;
   display: block;
-  max-width: 760px;
-  margin: 0 auto;
 }
 
 .param-table,
@@ -1169,8 +1176,8 @@ const handleCopy = () => {
   border-collapse: collapse;
   margin: var(--spacing-md) 0;
   font-size: 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -1178,31 +1185,30 @@ const handleCopy = () => {
 .product-table td,
 .summary-table td,
 .cost-summary-table td {
-  border: 1px solid #e2e8f0;
-  padding: 9px 14px;
-  color: #334155;
+  border: 1px solid #dee2e6;
+  padding: 10px 14px;
 }
 
 .label-cell {
-  background: #f1f5f9;
-  font-weight: 600;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  font-weight: bold;
   text-align: right;
   width: 120px;
-  color: #475569;
+  color: #495057;
 }
 
 .sub-label {
-  background: #f8fafc;
-  font-weight: 600;
+  background: linear-gradient(135deg, #e8f4f8, #d1ecf1);
+  font-weight: bold;
   text-align: center;
-  color: #475569;
+  color: #0c5460;
 }
 
 .process-detail {
   margin: var(--spacing-md) 0;
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 .process-table {
@@ -1215,48 +1221,51 @@ const handleCopy = () => {
 
 .process-table th,
 .process-table td {
-  border: 1px solid #e2e8f0;
-  padding: 9px 8px;
+  border: 1px solid #dee2e6;
+  padding: 10px 8px;
   text-align: center;
-  color: #334155;
 }
 
 .process-table th {
-  background: #334e68;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
   color: white;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .process-table tbody tr:hover {
-  background: #f8fafc;
+  background: #f8f9fa;
+  transition: background 0.2s;
 }
 
 .calc-trace {
   margin-top: var(--spacing-xl);
+  border-top: 3px solid #4a90e2;
+  padding-top: var(--spacing-lg);
+  background: linear-gradient(135deg, #f8f9fa 0%, white 100%);
   padding: var(--spacing-lg);
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .calc-trace h4 {
-  font-size: 17px;
-  margin: 0 0 var(--spacing-md);
-  color: #1e293b;
+  font-size: 20px;
+  margin-bottom: var(--spacing-md);
+  color: #2c3e50;
   padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid #334e68;
+  border-bottom: 2px solid #4a90e2;
 }
 
 .calc-trace h5 {
-  font-size: 15px;
+  font-size: 16px;
   margin: var(--spacing-lg) 0 var(--spacing-sm);
-  color: #334155;
+  color: #495057;
   padding-left: var(--spacing-sm);
-  border-left: 3px solid #334e68;
+  border-left: 4px solid #28a745;
 }
 
 .formula-table,
@@ -1284,49 +1293,56 @@ const handleCopy = () => {
 .formula-table th,
 .cut-levels-table th,
 .post-items-table th {
-  background: #64748b;
+  background: linear-gradient(135deg, #6c757d, #5a6268);
   color: white;
-  font-weight: 600;
+  font-weight: bold;
   text-align: center;
 }
 
 .formula-table tbody tr:hover,
 .cut-levels-table tbody tr:hover,
 .post-items-table tbody tr:hover {
-  background: #f8fafc;
+  background: #f8f9fa;
 }
 
 .cut-levels-table tr.selected {
-  background: #ecfdf5;
-  font-weight: 600;
-  border-left: 3px solid #10b981;
+  background: linear-gradient(90deg, #d4edda, #f8f9fa);
+  font-weight: bold;
+  border-left: 4px solid #28a745;
 }
 
 .imposition-trace .reason {
-  color: #475569;
+  color: #495057;
   font-style: italic;
   margin-top: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: #fffbeb;
-  border-left: 3px solid #f59e0b;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
   border-radius: 4px;
 }
 
 .btn-print {
-  padding: 8px 20px;
-  background: #334e68;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   margin-right: var(--spacing-sm);
   font-weight: 600;
   font-size: 14px;
-  transition: background 0.15s;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  transition: all 0.2s;
 }
 
 .btn-print:hover {
-  background: #243b53;
+  background: linear-gradient(135deg, #218838, #1aa179);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-print:active {
+  transform: translateY(0);
 }
 
 .modal-header {
@@ -1334,14 +1350,14 @@ const handleCopy = () => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md);
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  background: linear-gradient(135deg, #f8f9fa, white);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #243b53;
+  font-size: 20px;
+  color: #2c3e50;
   flex: 1;
 }
 

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS printing_machines (
     max_height DECIMAL(10,2) NOT NULL COMMENT '最大印刷高度(mm)',
     machine_type VARCHAR(50) COMMENT '机型：四色、对开、全开',
     opening_fee DECIMAL(10,2) DEFAULT 0 COMMENT '开机费(元)',
+    color_fee DECIMAL(10,2) DEFAULT 0 COMMENT '加色费(元/色，每加一色的开机加价)',
     price_per_thousand DECIMAL(10,2) DEFAULT 0 COMMENT '千印价(元/千张)',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -142,11 +143,11 @@ INSERT INTO product_sizes (category_id, name, width, height, code, sort_order) V
 (1, '48开 210×95', 210, 95, '48k', 5);
 
 -- 初始化印刷机器
-INSERT INTO printing_machines (name, code, max_width, max_height, machine_type, opening_fee, price_per_thousand) VALUES
-('海德堡6开四色机', 'heidelberg_6k', 460, 320, '四色机', 150, 80),
-('小森920B对开机', 'komori_920b', 920, 640, '对开机', 200, 100),
-('小森1620全开机', 'komori_1620', 1600, 1200, '全开机', 300, 120),
-('小森1320全开机', 'komori_1320', 1300, 900, '全开机', 250, 110);
+INSERT INTO printing_machines (name, code, max_width, max_height, machine_type, opening_fee, price_per_thousand, color_fee) VALUES
+('海德堡6开四色机', 'heidelberg_6k', 460, 320, '四色机', 150, 80, 30),
+('小森920B对开机', 'komori_920b', 920, 640, '对开机', 200, 100, 0),
+('小森1620全开机', 'komori_1620', 1600, 1200, '全开机', 300, 120, 0),
+('小森1320全开机', 'komori_1320', 1300, 900, '全开机', 250, 110, 0);
 
 -- 初始化纸张规格（无碳纸）
 -- price_per_ream 令价(元/令，1令=500全张)为主计价，price_per_sheet=令价/500 兜底。
