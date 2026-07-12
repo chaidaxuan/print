@@ -2,6 +2,7 @@ from app.models.category import ProductCategory
 from app.models.size import ProductSize
 from app.models.machine import PrintingMachine
 from app.models.paper import PaperSpec
+from app.models.union_paper import UnionPaperPrice
 from app.models.processing import PostProcessing
 from app.models.color import PrintingColor
 from app.models.param import SystemParam
@@ -13,6 +14,7 @@ __all__ = [
     "ProductSize",
     "PrintingMachine",
     "PaperSpec",
+    "UnionPaperPrice",
     "PostProcessing",
     "PrintingColor",
     "SystemParam",

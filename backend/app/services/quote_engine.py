@@ -23,6 +23,7 @@ from app.models import (
     ProductSize,
     PrintingMachine,
     PaperSpec,
+    UnionPaperPrice,
     PostProcessing,
     SystemParam,
     PrintingColor,
@@ -81,6 +82,92 @@ LEVEL_NAMES = {
 
 def _level_name(per_full: int) -> str:
     return LEVEL_NAMES.get(per_full, f"{per_full}开")
+
+
+# ============ 联单分层纸款辅助函数 ============
+
+def _get_union_layer_sequence(union_count: int) -> List[str]:
+    """按联数生成纸张层序列（上/中/下）。
+
+    2联 → [上, 下]
+    3联 → [上, 中, 下]
+    4联 → [上, 中, 中, 下]
+    N联 → [上, (N-2)个中, 下]
+    1联 → [中]  # 单联退化
+    """
+    if union_count <= 1:
+        return ["middle"]
+    elif union_count == 2:
+        return ["upper", "lower"]
+    else:
+        return ["upper"] + ["middle"] * (union_count - 2) + ["lower"]
+
+
+def _calculate_union_paper_cost(
+    db: Session,
+    weight: int,
+    paper_type: str,
+    union_count: int,
+    pages_per_book: int,
+    paper_sheets: int,
+) -> Decimal:
+    """联单分层纸款计算。
+
+    纸款 = 买纸全开张数 × 加权全开单张价。
+    加权全开单张价 = 按联层比例（上/中/下页数占比）加权的 ream_price / 500。
+    这与参考实现一致：纸款基于买纸数（含放数），而非有效页数。
+
+    Args:
+        weight: 克重
+        paper_type: 'dadu' 或 'zhengdu'
+        union_count: 联数
+        pages_per_book: 每本页数
+        paper_sheets: 买纸全开张数（已含放数）
+
+    Returns:
+        总纸款（元）
+    """
+    from app.models import UnionPaperPrice
+
+    paper_price = db.query(UnionPaperPrice).filter(UnionPaperPrice.weight == weight).first()
+    if not paper_price:
+        return Decimal(0)
+
+    prefix = "dadu" if paper_type == "dadu" else "zhengdu"
+    upper_ream = Decimal(str(getattr(paper_price, f"{prefix}_upper_price", 0)))
+    middle_ream = Decimal(str(getattr(paper_price, f"{prefix}_middle_price", 0)))
+    lower_ream = Decimal(str(getattr(paper_price, f"{prefix}_lower_price", 0)))
+
+    def _get_layer_ream(layer: str) -> Decimal:
+        if layer == "upper":
+            return upper_ream if upper_ream > 0 else (middle_ream if middle_ream > 0 else lower_ream)
+        elif layer == "lower":
+            return lower_ream if lower_ream > 0 else (middle_ream if middle_ream > 0 else upper_ream)
+        else:
+            return middle_ream if middle_ream > 0 else (upper_ream if upper_ream > 0 else lower_ream)
+
+    layers = _get_union_layer_sequence(union_count)
+    base_pages = pages_per_book // len(layers)
+    remainder = pages_per_book % len(layers)
+
+    page_distribution = []
+    for i, layer in enumerate(layers):
+        pages = base_pages
+        if remainder > 0 and (layer == "middle" or (i == 0 and "middle" not in layers)):
+            pages += remainder
+            remainder = 0
+        page_distribution.append((layer, pages))
+
+    # 加权令价 = Σ(layer_pages / total_pages * layer_ream_price)
+    weighted_ream = Decimal(0)
+    for layer, pages in page_distribution:
+        layer_ream = _get_layer_ream(layer)
+        weighted_ream += layer_ream * Decimal(pages)
+    weighted_ream = weighted_ream / Decimal(pages_per_book)
+
+    # 纸款 = 买纸全开张数 × (加权令价 / 500)
+    cost = Decimal(paper_sheets) * weighted_ream / Decimal(500)
+    return cost.quantize(Decimal("0.01"), ROUND_HALF_UP)
 
 
 class LiandanQuoteEngine:
@@ -150,7 +237,10 @@ class LiandanQuoteEngine:
         solutions = []
         for machine in machines:
             sol = self._solve_machine(
-                machine, size_w, size_h, total_pages, color, paper
+                machine, size_w, size_h, total_pages, color, paper,
+                sheet_count=params["sheet_count"],
+                pages_per_book=params["pages_per_book"],
+                quantity=quantity,
             )
             if sol:
                 solutions.append(sol)
@@ -315,8 +405,8 @@ class LiandanQuoteEngine:
             step("paper_cost", "纸款", "全开单张纸价 × 买纸数",
                  f"{float(per_sheet):.3f} × {psheets}",
                  float(paper_cost.quantize(Decimal("0.01"))), "元"),
-            step("printing_cost", "印刷费", "开机费 + 加色费×(色数−1) + 每版印数÷1000×千印价×色数",
-                 f"{plates} 色：开机费 + 加色费×{plates - 1} + {stp}÷1000×千印价×{plates}",
+            step("printing_cost", "印刷费", "开机费 + 千印价×⌈印张/1000⌉ + 颜色固定增量 + 颜色印工增量×⌈印张/1000⌉",
+                 f"⌈{stp}/1000⌉={-(-stp // 1000)}：(开机费 + 千印价×{-(-stp // 1000)}) + 颜色增量",
                  float(printing_cost.quantize(Decimal("0.01"))), "元"),
             step("post_processing_cost", "后加工费", "Σ 各工序 max(单价×数量, 最低消费)",
                  post_expr, float(post_cost.quantize(Decimal("0.01"))), "元"),
@@ -366,6 +456,9 @@ class LiandanQuoteEngine:
         total_pages: int,
         color: PrintingColor,
         paper: PaperSpec,
+        sheet_count: int,
+        pages_per_book: int,
+        quantity: int,
     ) -> Optional[Dict]:
         """在指定机器上求解成本。
 
@@ -415,29 +508,46 @@ class LiandanQuoteEngine:
         # 全开买纸数 = ceil((印张数 + 放数) / 每全张可开数)
         paper_sheets = -(-(sheets_to_print + spoilage) // per_full)  # ceil
 
-        # 纸款：优先按令价计（元/令，1令=500全张），回退到单张价。
-        # 参考站 Tab3 用令价表计价，实测锚点反推 50克≈394元/令。
-        ream_price = getattr(paper, "price_per_ream", None)
-        if ream_price and float(ream_price) > 0:
-            per_sheet = Decimal(str(ream_price)) / Decimal(500)
-        else:
-            per_sheet = Decimal(str(paper.price_per_sheet))
-        paper_cost = per_sheet * paper_sheets
+        # 纸款：联单分层计算（按上中下纸价加权）
+        # 纸系列判断：从 paper.spec_name 推断 dadu/zhengdu
+        spec_name = (paper.spec_name or "").lower()
+        paper_type = "dadu" if "大度" in spec_name or "dadu" in spec_name else "zhengdu"
 
-        # 印刷费：开机费 + 加色费×(色数−1) + 印工×色数
-        #   color.plate_count 实为“色数”(单黑1/双色2/四色4)，非物理印版数。
-        #   实测(海德堡6开)：单黑 80+40×1=120、双色 80+30×1+40×2=190 均命中。
-        #   每加一色 = 加色开机费 color_fee + 一遍印工(印张/1000×千印价)。
-        color_count = max(int(color.plate_count), 1)
+        # 调用分层纸款逻辑（基于买纸全开张数，含放数）
+        paper_cost = _calculate_union_paper_cost(
+            self.db,
+            weight=int(paper.gram_weight),
+            paper_type=paper_type,
+            union_count=sheet_count,
+            pages_per_book=pages_per_book,
+            paper_sheets=paper_sheets,
+        )
+        # per_sheet 仅用于计算轨迹展示，分层逻辑已不依赖它，给个等效值兼容
+        per_sheet = paper_cost / Decimal(paper_sheets) if paper_sheets > 0 else Decimal(0)
+
+        # 印刷费 = 单黑基准 + 颜色固定增量 + 颜色印工增量 × k
+        #   k = ⌈印张 ÷ 1000⌉（向上取整到“千印”，参考站按整千计印工，非原始除法）。
+        #   单黑基准 = 开机费 + 千印价 × k（海德堡6开 60 + 20k）。
+        #   颜色增量存颜色表（机器无关的颜色加价），实测反标定(27 点零误差)：
+        #     单黑        fixed=0   ink=0
+        #     双色/四色    fixed=70  ink=0     （四色机一遍过机，双色四色同价）
+        #     N专色(1..4)  fixed=20+40N ink=10N（每专色独立一遍：开机40+印工10k）
+        #     彩色+专色    fixed=180 ink=40    （=4专色，四色机4色组封顶）
+        #     空白免印     fixed=0   ink=0 且基准也不收 → 由 plate_count=0 触发
+        color_count = max(int(color.plate_count), 0)
         per_thousand = Decimal(str(machine.price_per_thousand))
         opening = Decimal(str(machine.opening_fee))
-        color_fee = Decimal(str(getattr(machine, "color_fee", 0) or 0))
-        ink_per_color = per_thousand * Decimal(sheets_to_print) / Decimal(1000)
-        printing_cost = (
-            opening
-            + color_fee * Decimal(color_count - 1)
-            + ink_per_color * Decimal(color_count)
-        )
+        k = Decimal(-(-sheets_to_print // 1000))  # ceil 到千
+        fixed_fee = Decimal(str(getattr(color, "fixed_fee", 0) or 0))
+        ink_extra = Decimal(str(getattr(color, "ink_per_thousand", 0) or 0))
+        if color_count == 0:
+            printing_cost = Decimal(0)  # 空白：不印刷，不收开机与印工
+        else:
+            printing_cost = (
+                opening + per_thousand * k          # 单黑基准
+                + fixed_fee                          # 颜色固定增量
+                + ink_extra * k                      # 颜色印工增量
+            )
         plates = color_count
 
         # 每版拼数的行列表达（如 2×2=4），仅用于展示

@@ -62,6 +62,27 @@ CREATE TABLE IF NOT EXISTS paper_specs (
     INDEX idx_spec (spec_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='纸张规格与价格表';
 
+-- 4.5 联单纸张分层价格表
+-- 联单报价时，一本按联数分成"上/中/下"若干层，每层用不同纸价（上纸贵、下纸便宜）。
+-- 数据库存的是令价（元/令），计算时先转吨价，再按页数逐层加权求和。
+-- 令价→吨价公式：吨价 = 令价 × 1,000,000 ÷ (克重 × 单张面积 × 500)
+--   单张面积：大度 1.06 m²、正度 0.86 m²（即纸张系数）。
+-- 层价回退：某层令价为 0 时，依次回退 中→上→下，都为 0 用默认吨价（大度8000、正度7000）。
+CREATE TABLE IF NOT EXISTS union_paper_prices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    weight INT NOT NULL COMMENT '纸张克重(g)',
+    dadu_upper_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '大度上纸令价(元/令)',
+    dadu_middle_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '大度中纸令价(元/令)',
+    dadu_lower_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '大度下纸令价(元/令)',
+    zhengdu_upper_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '正度上纸令价(元/令)',
+    zhengdu_middle_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '正度中纸令价(元/令)',
+    zhengdu_lower_price DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '正度下纸令价(元/令)',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_weight (weight)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='联单纸张分层价格表';
+
 -- 5. 后道工序价格表
 -- 计价单位对齐参考站：元/本(per_book)、元/版(per_plate)、元/页(per_page)、元/联(per_sheet_count)。
 -- 加卡纸/装订按成品开数分多档：每档一条独立记录(code=binding_1..4)，group_code(binding)串同组，
@@ -90,9 +111,11 @@ CREATE TABLE IF NOT EXISTS printing_colors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL COMMENT '颜色名称：单黑、四色、双色',
     code VARCHAR(50) NOT NULL UNIQUE COMMENT '颜色代码',
-    plate_count INT NOT NULL COMMENT '版数',
+    plate_count INT NOT NULL COMMENT '色数（单黑1/双色2/四色4/N专色N/彩色+专色5+），0=空白免印',
     color_type ENUM('black', 'spot', 'cmyk', 'mixed') COMMENT '颜色类型',
-    price_multiplier DECIMAL(10,4) DEFAULT 1.0000 COMMENT '价格系数',
+    price_multiplier DECIMAL(10,4) DEFAULT 1.0000 COMMENT '价格系数（旧字段，保留兼容，现已不参与印刷费计算）',
+    fixed_fee DECIMAL(10,2) DEFAULT 0 COMMENT '颜色固定增量(元)：相对单黑基准的额外固定开机费',
+    ink_per_thousand DECIMAL(10,2) DEFAULT 0 COMMENT '颜色印工增量(元/千印)：相对单黑基准每千印张的额外印工',
     sort_order INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='印刷颜色配置表';
@@ -143,8 +166,12 @@ INSERT INTO product_sizes (category_id, name, width, height, code, sort_order) V
 (1, '48开 210×95', 210, 95, '48k', 5);
 
 -- 初始化印刷机器
+-- opening_fee=开机费、price_per_thousand=千印价(元/千印，印工按 ⌈印张/1000⌉ 整千计)。
+-- 海德堡6开由 yinshuabaojia.com 实测反标定：单黑印刷费 = 60 + 20×⌈印张/1000⌉
+--   （7 个数量点 100~5000 零误差）。旧值 150/80 及会被本次覆盖的 80/16.16 均会在大数量发散。
+-- color_fee 列已弃用：颜色加价改由 printing_colors.fixed_fee / ink_per_thousand 承载（见颜色 seed）。
 INSERT INTO printing_machines (name, code, max_width, max_height, machine_type, opening_fee, price_per_thousand, color_fee) VALUES
-('海德堡6开四色机', 'heidelberg_6k', 460, 320, '四色机', 150, 80, 30),
+('海德堡6开四色机', 'heidelberg_6k', 460, 320, '四色机', 60, 20, 0),
 ('小森920B对开机', 'komori_920b', 920, 640, '对开机', 200, 100, 0),
 ('小森1620全开机', 'komori_1620', 1600, 1200, '全开机', 300, 120, 0),
 ('小森1320全开机', 'komori_1320', 1300, 900, '全开机', 250, 110, 0);
@@ -156,6 +183,14 @@ INSERT INTO paper_specs (name, category, gram_weight, width, height, spec_name, 
 ('无碳纸', '无碳纸', 50, 889, 1194, '大度全开', 394, 0.788),
 ('无碳纸', '无碳纸', 80, 889, 1194, '大度全开', 577, 1.154),
 ('无碳纸', '无碳纸', 108, 889, 1194, '大度全开', 721, 1.442);
+
+-- 初始化联单分层纸价（大度/正度 × 上中下，令价 元/令）
+-- 占位值基于 paper_specs 令价分层：上纸 +5%、中纸基准、下纸 -5%（后续可按实测校准）。
+-- 大度基准取 paper_specs.price_per_ream；正度暂按大度 ×0.81（正度面积≈0.86/1.06≈0.81 大度）。
+INSERT INTO union_paper_prices (weight, dadu_upper_price, dadu_middle_price, dadu_lower_price, zhengdu_upper_price, zhengdu_middle_price, zhengdu_lower_price) VALUES
+(50,  414, 394, 374,  335, 319, 303),
+(80,  606, 577, 548,  491, 467, 444),
+(108, 757, 721, 685,  613, 584, 555);
 
 -- 初始化后道工序（对齐 yinshuabaojia.com 参考站后工参数表）
 -- 加卡纸、装订按成品开数分4档；其余为单档。min_kai 仅展示，选档以 max_kai 为准
@@ -175,12 +210,23 @@ INSERT INTO post_processing (name, code, group_code, price_type, unit_price, min
 ('装订(50开以上)',   'binding_4',   'binding',    'per_book',        0.1,  20, 51,   NULL, 12),
 ('换边联字',         'edge_words',  'edge_words', 'per_sheet_count', 10,   30, NULL, NULL, 13);
 
--- 初始化印刷颜色
-INSERT INTO printing_colors (name, code, plate_count, color_type, price_multiplier, sort_order) VALUES
-('空白', 'blank', 0, 'black', 0, 1),
-('单黑', 'single_black', 1, 'black', 1.0, 2),
-('双色', 'two_color', 2, 'spot', 1.5, 3),
-('四色', 'cmyk', 4, 'cmyk', 2.0, 4);
+-- 初始化印刷颜色（含颜色对印刷费的增量：fixed_fee 固定增量、ink_per_thousand 每千印张印工增量）
+--   印刷费 = 单黑基准(开机+千印价×k) + fixed_fee + ink_per_thousand×k，k=⌈印张/1000⌉。
+--   参考站 yinshuabaojia 演示反标定，27 个数据点(9色×3数量)零误差：
+--     双色/四色同价(四色机一遍过机)；N专色每色独立一遍(开机+40、印工+10k)；彩色+专色封顶=4专色。
+INSERT INTO printing_colors (name, code, plate_count, color_type, price_multiplier, fixed_fee, ink_per_thousand, sort_order) VALUES
+('空白',        'blank',        0, 'black', 0,   0,   0,  1),
+('单黑',        'single_black', 1, 'black', 1.0, 0,   0,  2),
+('双色',        'two_color',    2, 'spot',  1.5, 70,  0,  3),
+('四色(彩色)',   'cmyk',         4, 'cmyk',  2.0, 70,  0,  4),
+('1专色',       'spot_1',       1, 'spot',  1.0, 60,  10, 5),
+('2专色',       'spot_2',       2, 'spot',  1.0, 100, 20, 6),
+('3专色',       'spot_3',       3, 'spot',  1.0, 140, 30, 7),
+('4专色',       'spot_4',       4, 'spot',  1.0, 180, 40, 8),
+('彩色+1专色',   'cmyk_spot_1',  5, 'mixed', 1.0, 180, 40, 9),
+('彩色+2专色',   'cmyk_spot_2',  6, 'mixed', 1.0, 180, 40, 10),
+('彩色+3专色',   'cmyk_spot_3',  7, 'mixed', 1.0, 180, 40, 11),
+('彩色+4专色',   'cmyk_spot_4',  8, 'mixed', 1.0, 180, 40, 12);
 
 -- 初始化系统参数
 INSERT INTO system_params (param_key, param_value, param_type, description) VALUES
