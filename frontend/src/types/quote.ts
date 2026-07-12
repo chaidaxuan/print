@@ -76,6 +76,25 @@ export interface MachineCostDetail {
   is_recommended: boolean
 }
 
+export interface PaperLayerItem {
+  layer: string
+  label: string
+  pages: number
+  ream_price: number
+}
+
+export interface PaperLayerDetail {
+  weight: number
+  paper_type: string
+  paper_type_label: string
+  union_count: number
+  pages_per_book: number
+  paper_sheets: number
+  layers: PaperLayerItem[]
+  weighted_ream_price: number
+  paper_cost: number
+}
+
 export interface LiandanQuoteResponse {
   quantity: number
   unit_price: number
@@ -91,6 +110,7 @@ export interface LiandanQuoteResponse {
   volume_m3?: number
   paper_series?: string
   cut_type?: string
+  paper_layer_detail?: PaperLayerDetail
   quote_id?: string
   quote_time?: string
 }

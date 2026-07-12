@@ -110,7 +110,7 @@ def _calculate_union_paper_cost(
     union_count: int,
     pages_per_book: int,
     paper_sheets: int,
-) -> Decimal:
+) -> tuple:
     """联单分层纸款计算。
 
     纸款 = 买纸全开张数 × 加权全开单张价。
@@ -125,13 +125,13 @@ def _calculate_union_paper_cost(
         paper_sheets: 买纸全开张数（已含放数）
 
     Returns:
-        总纸款（元）
+        (总纸款, 分层明细dict)
     """
     from app.models import UnionPaperPrice
 
     paper_price = db.query(UnionPaperPrice).filter(UnionPaperPrice.weight == weight).first()
     if not paper_price:
-        return Decimal(0)
+        return Decimal(0), None
 
     prefix = "dadu" if paper_type == "dadu" else "zhengdu"
     upper_ream = Decimal(str(getattr(paper_price, f"{prefix}_upper_price", 0)))
@@ -145,6 +145,8 @@ def _calculate_union_paper_cost(
             return lower_ream if lower_ream > 0 else (middle_ream if middle_ream > 0 else upper_ream)
         else:
             return middle_ream if middle_ream > 0 else (upper_ream if upper_ream > 0 else lower_ream)
+
+    LAYER_LABELS = {"upper": "上层纸", "middle": "中层纸", "lower": "下层纸"}
 
     layers = _get_union_layer_sequence(union_count)
     base_pages = pages_per_book // len(layers)
@@ -160,14 +162,35 @@ def _calculate_union_paper_cost(
 
     # 加权令价 = Σ(layer_pages / total_pages * layer_ream_price)
     weighted_ream = Decimal(0)
+    layer_details = []
     for layer, pages in page_distribution:
         layer_ream = _get_layer_ream(layer)
         weighted_ream += layer_ream * Decimal(pages)
+        layer_details.append({
+            "layer": layer,
+            "label": LAYER_LABELS.get(layer, layer),
+            "pages": pages,
+            "ream_price": float(layer_ream),
+        })
     weighted_ream = weighted_ream / Decimal(pages_per_book)
 
     # 纸款 = 买纸全开张数 × (加权令价 / 500)
     cost = Decimal(paper_sheets) * weighted_ream / Decimal(500)
-    return cost.quantize(Decimal("0.01"), ROUND_HALF_UP)
+    cost = cost.quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+    paper_detail = {
+        "weight": weight,
+        "paper_type": paper_type,
+        "paper_type_label": "大度" if paper_type == "dadu" else "正度",
+        "union_count": union_count,
+        "pages_per_book": pages_per_book,
+        "paper_sheets": paper_sheets,
+        "layers": layer_details,
+        "weighted_ream_price": float(weighted_ream.quantize(Decimal("0.01"))),
+        "paper_cost": float(cost),
+    }
+
+    return cost, paper_detail
 
 
 class LiandanQuoteEngine:
@@ -347,7 +370,8 @@ class LiandanQuoteEngine:
             "post_processing_items": post_items,
             "paper_series": paper_series,
             "cut_type": cut_type,
-            "weight_kg": None,   # 按“缺失字段留空”决策暂不填
+            "paper_layer_detail": best.get("paper_layer_detail"),
+            "weight_kg": None,   # 按"缺失字段留空"决策暂不填
             "volume_m3": None,
         }
 
@@ -514,7 +538,7 @@ class LiandanQuoteEngine:
         paper_type = "dadu" if "大度" in spec_name or "dadu" in spec_name else "zhengdu"
 
         # 调用分层纸款逻辑（基于买纸全开张数，含放数）
-        paper_cost = _calculate_union_paper_cost(
+        paper_cost, paper_layer_detail = _calculate_union_paper_cost(
             self.db,
             weight=int(paper.gram_weight),
             paper_type=paper_type,
@@ -526,7 +550,7 @@ class LiandanQuoteEngine:
         per_sheet = paper_cost / Decimal(paper_sheets) if paper_sheets > 0 else Decimal(0)
 
         # 印刷费 = 单黑基准 + 颜色固定增量 + 颜色印工增量 × k
-        #   k = ⌈印张 ÷ 1000⌉（向上取整到“千印”，参考站按整千计印工，非原始除法）。
+        #   k = ⌈印张 ÷ 1000⌉（向上取整到"千印"，参考站按整千计印工，非原始除法）。
         #   单黑基准 = 开机费 + 千印价 × k（海德堡6开 60 + 20k）。
         #   颜色增量存颜色表（机器无关的颜色加价），实测反标定(27 点零误差)：
         #     单黑        fixed=0   ink=0
@@ -571,6 +595,7 @@ class LiandanQuoteEngine:
             "paper_cost": paper_cost,
             "printing_cost": printing_cost,
             "total_cost": paper_cost + printing_cost,
+            "paper_layer_detail": paper_layer_detail,
             # —— 拼版轨迹（供计算过程展示）——
             "press_w": press_w,
             "press_h": press_h,
@@ -615,7 +640,7 @@ class LiandanQuoteEngine:
         前端提交的是 group_code（如 binding/add_card/creasing）。加卡纸、装订这类
         按成品开数分多档，需用 kai 在同组内选出对应档；单档项 group_code 即 code。
         每个工序：单价×数量(视单位) 与 最低消费(min_charge) 取较大值（保底）。
-        逐项明细 items 供成本明细弹窗展示每项算法（如“装订(20),加封面(30)”）。
+        逐项明细 items 供成本明细弹窗展示每项算法（如"装订(20),加封面(30)"）。
         """
         total = Decimal("0")
         items = []
@@ -653,7 +678,7 @@ class LiandanQuoteEngine:
 
         选档规则：升序按 max_kai 取第一个 max_kai >= kai 的档，自动闭合相邻档间的
         缝隙（如 19 开介于 11-18 与 20-50 之间仍归入 20-50 档）；max_kai 为 NULL
-        表示无上限档（如“50开以上”），作为兜底。单档项(如加封面)只有一行直接返回。
+        表示无上限档（如"50开以上"），作为兜底。单档项(如加封面)只有一行直接返回。
         """
         rows = (
             self.db.query(PostProcessing)

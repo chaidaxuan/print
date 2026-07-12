@@ -228,6 +228,40 @@
             </tr>
           </table>
 
+          <!-- ⑤.1 纸张分层成本明细 -->
+          <div v-if="paperDetail" class="paper-layer-section">
+            <h4 class="paper-layer-title">纸张分层成本明细</h4>
+            <table class="paper-layer-table">
+              <thead>
+                <tr>
+                  <th>纸层</th>
+                  <th>页数</th>
+                  <th>令价（元/令）</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(layer, i) in paperDetail.layers" :key="i">
+                  <td>{{ layer.label }}</td>
+                  <td>{{ layer.pages }}</td>
+                  <td>{{ layer.ream_price.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="weighted-row">
+                  <td colspan="2">加权令价</td>
+                  <td>{{ paperDetail.weighted_ream_price.toFixed(2) }} 元/令</td>
+                </tr>
+                <tr class="result-row">
+                  <td colspan="2">纸款 = 买纸数({{ paperDetail.paper_sheets }}全张) × 加权令价 / 500</td>
+                  <td><strong>¥{{ paperDetail.paper_cost.toFixed(2) }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+            <p class="paper-meta">
+              {{ paperDetail.weight }}克 {{ paperDetail.paper_type_label }}无碳纸 · {{ paperDetail.union_count }}联 · 每本{{ paperDetail.pages_per_book }}页
+            </p>
+          </div>
+
           <!-- ⑤.5 整体计算公式说明(大公式) -->
           <div class="overall-formula">
             <h4 class="formula-title">📐 整体计算公式</h4>
@@ -488,6 +522,7 @@ const cb = computed(() => props.result.cost_breakdown)
 const mi = computed(() => props.result.machine_info)
 const trace = computed(() => props.result.calc_trace)
 const imp = computed(() => trace.value?.imposition)
+const paperDetail = computed(() => props.result.paper_layer_detail)
 const formData = computed(() => ({ sheet_count: 3 })) // 临时兼容,待父组件传入
 
 const postItemsText = computed(() => {
@@ -1133,6 +1168,76 @@ const handleCopy = () => {
   font-weight: bold;
   color: #4a90e2;
   padding: 4px 0;
+}
+
+/* ======== 纸张分层成本明细 ======== */
+.paper-layer-section {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #fffdf7 0%, #fef9e7 100%);
+  border-radius: 10px;
+  border: 2px solid #f0c040;
+  box-shadow: 0 3px 10px rgba(240, 192, 64, 0.15);
+}
+
+.paper-layer-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #856404;
+  margin: 0 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid #f0c040;
+}
+
+.paper-layer-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-sm) 0;
+  font-size: 14px;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.paper-layer-table th,
+.paper-layer-table td {
+  border: 1px solid #dee2e6;
+  padding: 10px 14px;
+  text-align: center;
+}
+
+.paper-layer-table th {
+  background: linear-gradient(135deg, #f0c040, #e0a800);
+  color: white;
+  font-weight: bold;
+}
+
+.paper-layer-table tbody tr:hover {
+  background: #fffde6;
+}
+
+.paper-layer-table tfoot td {
+  background: #fef9e7;
+  font-weight: bold;
+}
+
+.paper-layer-table .weighted-row td {
+  border-top: 2px solid #f0c040;
+  color: #856404;
+}
+
+.paper-layer-table .result-row td {
+  color: #e63946;
+  font-size: 15px;
+}
+
+.paper-meta {
+  margin-top: var(--spacing-sm);
+  font-size: 13px;
+  color: #856404;
+  text-align: right;
+  font-style: italic;
 }
 
 /* ======== 打印单整体美化 ======== */

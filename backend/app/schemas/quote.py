@@ -117,6 +117,27 @@ class CalcTrace(BaseModel):
     post_processing_items: List[PostProcItem] = Field(default=[], description="后加工逐项")
 
 
+class PaperLayerItem(BaseModel):
+    """纸张分层单项"""
+    layer: str
+    label: str
+    pages: int
+    ream_price: float
+
+
+class PaperLayerDetail(BaseModel):
+    """纸张分层成本明细"""
+    weight: int = Field(..., description="克重")
+    paper_type: str = Field(..., description="纸系列: dadu/zhengdu")
+    paper_type_label: str = Field(..., description="纸系列中文: 大度/正度")
+    union_count: int = Field(..., description="联数")
+    pages_per_book: int = Field(..., description="每本页数")
+    paper_sheets: int = Field(..., description="买纸全开张数")
+    layers: List[PaperLayerItem] = Field(..., description="各层明细")
+    weighted_ream_price: float = Field(..., description="加权令价")
+    paper_cost: float = Field(..., description="纸款")
+
+
 class LiandanQuoteResponse(BaseModel):
     """无碳联单报价响应"""
     quantity: int = Field(..., description="订单数量")
@@ -133,6 +154,7 @@ class LiandanQuoteResponse(BaseModel):
     volume_m3: Optional[float] = Field(None, description="体积(立方米)")
     paper_series: Optional[str] = Field(None, description="纸系列(大度/正度)")
     cut_type: Optional[str] = Field(None, description="开纸类型(如 大度8开)")
+    paper_layer_detail: Optional["PaperLayerDetail"] = Field(None, description="纸张分层成本明细")
     quote_id: Optional[str] = Field(None, description="报价ID(后端记录ID)")
     quote_time: Optional[str] = Field(None, description="报价时间(ISO)")
 
