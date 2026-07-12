@@ -196,3 +196,30 @@ export interface PostProcessingParamInput {
 export interface PostProcessingParamSaveRequest {
   params: PostProcessingParamInput[]
 }
+
+export interface UnionPaperPrice {
+  id: number
+  weight: number
+  dadu_upper_price: number
+  dadu_middle_price: number
+  dadu_lower_price: number
+  zhengdu_upper_price: number
+  zhengdu_middle_price: number
+  zhengdu_lower_price: number
+  is_active: boolean
+}
+
+export interface UnionPaperPriceInput {
+  weight: number
+  dadu_upper_price: number
+  dadu_middle_price: number
+  dadu_lower_price: number
+  zhengdu_upper_price: number
+  zhengdu_middle_price: number
+  zhengdu_lower_price: number
+  is_active: boolean
+}
+
+export interface UnionPaperPriceSaveRequest {
+  papers: UnionPaperPriceInput[]
+}

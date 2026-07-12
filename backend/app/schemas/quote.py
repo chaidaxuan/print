@@ -235,3 +235,36 @@ class PostProcessingParamInput(BaseModel):
 class PostProcessingParamSaveRequest(BaseModel):
     """后工参数整表保存请求"""
     params: List[PostProcessingParamInput] = Field(..., description="后工参数行列表")
+
+
+class UnionPaperPriceResponse(BaseModel):
+    """联单纸张分层价格响应"""
+    id: int
+    weight: int
+    dadu_upper_price: float
+    dadu_middle_price: float
+    dadu_lower_price: float
+    zhengdu_upper_price: float
+    zhengdu_middle_price: float
+    zhengdu_lower_price: float
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class UnionPaperPriceInput(BaseModel):
+    """联单纸张分层价格保存项"""
+    weight: int = Field(..., gt=0)
+    dadu_upper_price: float = Field(0, ge=0)
+    dadu_middle_price: float = Field(0, ge=0)
+    dadu_lower_price: float = Field(0, ge=0)
+    zhengdu_upper_price: float = Field(0, ge=0)
+    zhengdu_middle_price: float = Field(0, ge=0)
+    zhengdu_lower_price: float = Field(0, ge=0)
+    is_active: bool = True
+
+
+class UnionPaperPriceSaveRequest(BaseModel):
+    """联单纸张分层价格整表保存请求"""
+    papers: List[UnionPaperPriceInput]

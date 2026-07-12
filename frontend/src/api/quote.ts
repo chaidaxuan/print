@@ -8,7 +8,9 @@ import type {
   CostAddonTier,
   CostAddonTierSaveRequest,
   PostProcessingParam,
-  PostProcessingParamSaveRequest
+  PostProcessingParamSaveRequest,
+  UnionPaperPrice,
+  UnionPaperPriceSaveRequest
 } from '@/types/quote'
 
 /**
@@ -72,4 +74,18 @@ export function getPostProcessingParams(): Promise<PostProcessingParam[]> {
  */
 export function savePostProcessingParams(data: PostProcessingParamSaveRequest): Promise<PostProcessingParam[]> {
   return request.put('/quote/post-processing-params', data)
+}
+
+/**
+ * 获取联单纸张分层价格
+ */
+export function getUnionPaperPrices(): Promise<UnionPaperPrice[]> {
+  return request.get('/quote/union-paper-prices')
+}
+
+/**
+ * 整表保存联单纸张分层价格
+ */
+export function saveUnionPaperPrices(data: UnionPaperPriceSaveRequest): Promise<UnionPaperPrice[]> {
+  return request.put('/quote/union-paper-prices', data)
 }

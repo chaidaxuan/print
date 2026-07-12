@@ -13,9 +13,11 @@ from app.schemas.quote import (
     CostAddonTierSaveRequest,
     PostProcessingParamResponse,
     PostProcessingParamSaveRequest,
+    UnionPaperPriceResponse,
+    UnionPaperPriceSaveRequest,
 )
 from app.services.quote_engine import LiandanQuoteEngine
-from app.models import ProductSize, PrintingColor, PostProcessing, QuoteRecord, CostAddonTier
+from app.models import ProductSize, PrintingColor, PostProcessing, QuoteRecord, CostAddonTier, UnionPaperPrice
 import json
 
 router = APIRouter(prefix="/api/quote", tags=["报价"])
@@ -179,6 +181,61 @@ def save_post_processing_params(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"保存后工参数失败: {str(e)}")
+
+
+@router.get("/union-paper-prices", response_model=List[UnionPaperPriceResponse])
+def get_union_paper_prices(db: Session = Depends(get_db)):
+    """获取联单纸张分层价格全表"""
+    rows = db.query(UnionPaperPrice).order_by(UnionPaperPrice.weight).all()
+    return rows
+
+
+@router.put("/union-paper-prices", response_model=List[UnionPaperPriceResponse])
+def save_union_paper_prices(
+    request: UnionPaperPriceSaveRequest,
+    db: Session = Depends(get_db)
+):
+    """整表保存联单纸张分层价格。按 weight 做 upsert。"""
+    try:
+        incoming_weights = {p.weight for p in request.papers}
+        db.query(UnionPaperPrice).filter(
+            ~UnionPaperPrice.weight.in_(incoming_weights)
+        ).delete(synchronize_session=False)
+
+        saved = []
+        for item in request.papers:
+            existing = db.query(UnionPaperPrice).filter(
+                UnionPaperPrice.weight == item.weight
+            ).first()
+            if existing:
+                existing.dadu_upper_price = item.dadu_upper_price
+                existing.dadu_middle_price = item.dadu_middle_price
+                existing.dadu_lower_price = item.dadu_lower_price
+                existing.zhengdu_upper_price = item.zhengdu_upper_price
+                existing.zhengdu_middle_price = item.zhengdu_middle_price
+                existing.zhengdu_lower_price = item.zhengdu_lower_price
+                existing.is_active = item.is_active
+                saved.append(existing)
+            else:
+                row = UnionPaperPrice(
+                    weight=item.weight,
+                    dadu_upper_price=item.dadu_upper_price,
+                    dadu_middle_price=item.dadu_middle_price,
+                    dadu_lower_price=item.dadu_lower_price,
+                    zhengdu_upper_price=item.zhengdu_upper_price,
+                    zhengdu_middle_price=item.zhengdu_middle_price,
+                    zhengdu_lower_price=item.zhengdu_lower_price,
+                    is_active=item.is_active,
+                )
+                db.add(row)
+                saved.append(row)
+        db.commit()
+        for row in saved:
+            db.refresh(row)
+        return saved
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"保存联单纸价失败: {str(e)}")
 
 
 @router.get("/history")

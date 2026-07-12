@@ -162,8 +162,10 @@
         <div class="panel-head">
           <span class="panel-title">专版无碳联单纸张设置</span>
           <div class="btn-group">
-            <a href="#" class="btn btn-save" @click.prevent>保存</a>
-            <a href="#" class="btn" @click.prevent>增加行</a>
+            <a href="#" class="btn btn-save" @click.prevent="savePapers">
+              {{ paperSaving ? '保存中...' : '保存' }}
+            </a>
+            <a href="#" class="btn" @click.prevent="addPaperRow">增加行</a>
           </div>
         </div>
         <table class="data-table">
@@ -185,7 +187,7 @@
           </thead>
           <tbody>
             <tr v-for="(p, i) in papers" :key="i">
-              <td><input class="ipt ipt-xs" type="text" v-model="p.gram" disabled /></td>
+              <td><input class="ipt ipt-xs" type="text" v-model="p.gram" /></td>
               <td><input class="ipt ipt-xs" type="text" v-model="p.duUp" /></td>
               <td><input class="ipt ipt-xs" type="text" v-model="p.duMid" /></td>
               <td><input class="ipt ipt-xs" type="text" v-model="p.duDown" /></td>
@@ -198,7 +200,7 @@
               <td><input type="checkbox" v-model="p.isDefault" /></td>
               <td class="op">
                 <a href="#" class="link" @click.prevent>设定特规纸规格</a>
-                <a href="#" class="link" @click.prevent>删除</a>
+                <a href="#" class="link" @click.prevent="removePaperRow(i)">删除</a>
               </td>
             </tr>
           </tbody>
@@ -299,7 +301,9 @@ import {
   getCostAddonTiers,
   saveCostAddonTiers,
   getPostProcessingParams,
-  savePostProcessingParams
+  savePostProcessingParams,
+  getUnionPaperPrices,
+  saveUnionPaperPrices
 } from '@/api/quote'
 import type { CostAddonTierInput, PostProcessingParam } from '@/types/quote'
 
@@ -342,12 +346,79 @@ const machines = reactive([
   { type: '全开机', name: '1620全开', bite: 10, length: 2100, width: 1600, minLength: 880, minWidth: 580, minGram: 0, maxGram: 0, restore: false }
 ])
 
-// Tab3 —— 纸张
-const papers = reactive([
-  { gram: '50', duUp: '350', duMid: '470', duDown: '350', zhengUp: '280', zhengMid: '350', zhengDown: '280', useDu: true, useZheng: true, useSpecial: false, isDefault: true },
-  { gram: '80', duUp: '450', duMid: '570', duDown: '450', zhengUp: '380', zhengMid: '450', zhengDown: '380', useDu: true, useZheng: true, useSpecial: false, isDefault: false },
-  { gram: '108', duUp: '480', duMid: '590', duDown: '480', zhengUp: '300', zhengMid: '4900', zhengDown: '300', useDu: true, useZheng: true, useSpecial: false, isDefault: false }
-])
+// Tab3 —— 纸张（接后端）
+interface PaperRow {
+  gram: string
+  duUp: string
+  duMid: string
+  duDown: string
+  zhengUp: string
+  zhengMid: string
+  zhengDown: string
+  useDu: boolean
+  useZheng: boolean
+  useSpecial: boolean
+  isDefault: boolean
+}
+const papers = reactive<PaperRow[]>([])
+const paperSaving = ref(false)
+
+async function loadPapers() {
+  try {
+    const rows = await getUnionPaperPrices()
+    papers.splice(0, papers.length, ...rows.map((r, i) => ({
+      gram: String(r.weight),
+      duUp: String(r.dadu_upper_price),
+      duMid: String(r.dadu_middle_price),
+      duDown: String(r.dadu_lower_price),
+      zhengUp: String(r.zhengdu_upper_price),
+      zhengMid: String(r.zhengdu_middle_price),
+      zhengDown: String(r.zhengdu_lower_price),
+      useDu: true,
+      useZheng: true,
+      useSpecial: false,
+      isDefault: i === 0
+    })))
+  } catch (e: any) {
+    console.error('加载纸张价格失败:', e?.message || e)
+  }
+}
+
+async function savePapers() {
+  if (paperSaving.value) return
+  paperSaving.value = true
+  try {
+    const data = papers.map(p => ({
+      weight: Number(p.gram) || 0,
+      dadu_upper_price: Number(p.duUp) || 0,
+      dadu_middle_price: Number(p.duMid) || 0,
+      dadu_lower_price: Number(p.duDown) || 0,
+      zhengdu_upper_price: Number(p.zhengUp) || 0,
+      zhengdu_middle_price: Number(p.zhengMid) || 0,
+      zhengdu_lower_price: Number(p.zhengDown) || 0,
+      is_active: true
+    }))
+    await saveUnionPaperPrices({ papers: data })
+    alert('纸张价格已保存')
+    await loadPapers()
+  } catch (e: any) {
+    alert('保存失败：' + (e?.message || e))
+  } finally {
+    paperSaving.value = false
+  }
+}
+
+function addPaperRow() {
+  papers.push({
+    gram: '', duUp: '0', duMid: '0', duDown: '0',
+    zhengUp: '0', zhengMid: '0', zhengDown: '0',
+    useDu: true, useZheng: true, useSpecial: false, isDefault: false
+  })
+}
+
+function removePaperRow(index: number) {
+  papers.splice(index, 1)
+}
 
 // Tab4 —— 后工参数（接后端）
 const postParams = reactive<PostProcessingParam[]>([])
@@ -550,6 +621,7 @@ async function saveCostTiers() {
 onMounted(() => {
   loadCostTiers()
   loadPostParams()
+  loadPapers()
 })
 </script>
 
