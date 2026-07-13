@@ -87,35 +87,37 @@
           <tr>
             <th>印刷颜色</th>
             <td>
-              <div class="color-row">
-                <span class="label">正面:</span>
-                <select v-model="localData.color_code" class="form-select">
-                  <option v-for="color in colors" :key="color.code" :value="color.code">
-                    {{ color.name }}
-                  </option>
-                </select>
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="backSide" />
-                  背面:
-                </label>
-              </div>
-              <div class="color-options">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="frontSolid" />
-                  正面大实地
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="backSolid" />
-                  背面大实地
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="frontHighQuality" />
-                  正面高品质
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="backHighQuality" />
-                  背面高品质
-                </label>
+              <div class="color-wrap">
+                <div class="color-row">
+                  <span class="label">正面:</span>
+                  <select v-model="localData.color_code" class="form-select">
+                    <option v-for="color in colors" :key="color.code" :value="color.code">
+                      {{ color.name }}
+                    </option>
+                  </select>
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="backSide" />
+                    背面:
+                  </label>
+                </div>
+                <div class="color-quality-box">
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="frontSolid" />
+                    正面大实地
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="backSolid" />
+                    背面大实地
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="frontHighQuality" />
+                    正面高品质
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" v-model="backHighQuality" />
+                    背面高品质
+                  </label>
+                </div>
               </div>
             </td>
           </tr>
@@ -428,16 +430,18 @@ onMounted(async () => {
   background: white;
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
-  padding: var(--spacing-lg);
+  padding: 0;
+  overflow: hidden;
 }
 
 .form-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
 .form-table tr {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #cfd6e8;
 }
 
 .form-table tr:last-child {
@@ -445,38 +449,43 @@ onMounted(async () => {
 }
 
 .form-table th {
-  text-align: left;
-  padding: var(--spacing-md);
-  font-weight: 600;
-  color: var(--text-primary);
-  vertical-align: top;
-  width: 100px;
+  text-align: center;
+  padding: 6px 10px;
+  font-weight: 500;
+  color: #333;
+  vertical-align: middle;
+  width: 96px;
+  background: #eef1fb;
+  border-right: 1px solid #cfd6e8;
+  white-space: nowrap;
 }
 
 .form-table td {
-  padding: var(--spacing-md);
+  padding: 6px 10px;
+  vertical-align: middle;
 }
 
 .form-select,
 .form-input {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-sm);
+  padding: 3px 6px;
+  border: 1px solid #b8c0d4;
+  border-radius: 3px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
+  background: white;
 }
 
 .form-select {
-  min-width: 200px;
+  min-width: 160px;
 }
 
 .form-input {
-  width: 120px;
+  width: 100px;
 }
 
 .form-input.small {
-  width: 70px;
+  width: 64px;
 }
 
 .custom-size-row {
@@ -513,21 +522,36 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+.color-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .color-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  gap: 6px;
 }
 
 .color-row .label {
-  color: var(--text-secondary);
+  color: #333;
 }
 
-.color-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
+.color-quality-box {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 2px 4px;
+  padding: 4px 8px;
+  border: 1px solid #cfd6e8;
+  border-radius: 3px;
+  background: #fafbff;
+}
+
+.color-quality-box .checkbox-label {
+  margin-left: 0;
+  font-size: 12px;
 }
 
 .post-processing {
@@ -539,9 +563,18 @@ onMounted(async () => {
   border-collapse: collapse;
 }
 
+.processing-table tr {
+  border-bottom: 1px solid #e3e8f4;
+}
+
+.processing-table tr:last-child {
+  border-bottom: none;
+}
+
 .processing-table td {
-  padding: var(--spacing-xs) 0;
-  vertical-align: top;
+  padding: 5px 0;
+  vertical-align: middle;
+  width: 50%;
 }
 
 .sub-option {
@@ -562,9 +595,9 @@ onMounted(async () => {
 }
 
 .form-actions {
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border-color);
+  margin-top: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid #cfd6e8;
 }
 
 .input-group {
@@ -612,13 +645,14 @@ onMounted(async () => {
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
+  background-color: #f56c6c;
   color: white;
   font-weight: 500;
+  padding: 6px 22px;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-hover);
+  background-color: #e85555;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }

@@ -14,27 +14,32 @@
         </button>
       </div>
 
-      <!-- 客户类型切换 -->
-      <div class="customer-types">
-        <button
-          v-for="type in customerTypes"
-          :key="type.code"
-          :class="['type-btn', { active: selectedType === type.code }]"
-          @click="selectedType = type.code"
-        >
-          {{ type.name }}
-        </button>
-      </div>
+      <!-- 客户类型切换 + 报表导出 同一行 -->
+      <div class="toolbar-row">
+        <div class="customer-types">
+          <button
+            v-for="type in customerTypes"
+            :key="type.code"
+            :class="['type-btn', { active: selectedType === type.code }]"
+            @click="selectedType = type.code"
+          >
+            {{ type.name }}
+          </button>
+        </div>
 
-      <!-- 报表导出 -->
-      <div class="export-actions">
-        <a href="#" class="export-link" @click.prevent="handleExport('cost')">成本明细</a>
-        <a href="#" class="export-link" @click.prevent="handleExport('quote')">报价单</a>
-        <a href="#" class="export-link" @click.prevent="handleExport('contract')">合同单</a>
-        <a href="#" class="export-link" @click.prevent="handleExport('process')">生产流程单</a>
+        <div class="export-actions">
+          <a href="#" class="export-link" @click.prevent="handleExport('process')">生产流程单</a>
+          <a href="#" class="export-link" @click.prevent="handleExport('contract')">合同单</a>
+          <a href="#" class="export-link" @click.prevent="handleExport('quote')">报价单</a>
+          <a href="#" class="export-link" @click.prevent="handleExport('cost')">成本明细</a>
+        </div>
       </div>
     </div>
 
+    <!-- 主体：左右两列 -->
+    <div class="result-body">
+    <!-- 左列：阶梯价表 + 备注 + 企业信息 -->
+    <div class="result-left">
     <!-- 阶梯价格表 -->
     <div class="price-table-container">
       <table class="price-table">
@@ -122,17 +127,20 @@
         </tr>
       </table>
     </div>
+    </div>
+    <!-- /左列 -->
 
-    <!-- 成本明细摘要 -->
+    <!-- 右列：成本明细摘要 -->
+    <div class="result-right">
     <div class="cost-summary">
       <div class="summary-title">直接计算出来的成本</div>
       <div class="summary-content">
         <p><strong>【专版联单】报价ID:</strong>{{ quoteId }}</p>
         <p><strong>规格：</strong>{{ spec?.sizeName || result.machine_info.printing_size }}</p>
         <p><strong>材质：</strong>{{ spec?.material || '无碳纸' }}</p>
-        <p><strong>数量：</strong>{{ result.quantity }}本</p>
+        <p><strong>数量：</strong>{{ quantityLabel }}</p>
         <p><strong>印刷：</strong>{{ spec?.colorName || '—' }}</p>
-        <p><strong>印后工艺：</strong>{{ spec?.processing || '无' }}</p>
+        <p><strong>印后工艺：</strong>{{ processingLabel }}</p>
         <p><strong>计算结果：</strong>{{ formatPrice(result.total_price) }}元 [{{ formatPrice(result.unit_price) }}元/本]</p>
         <p class="promo-text">印刷报价系统：提高报价效率，降低业务成本，展现实力优势，赢得更多订单。</p>
         <div class="summary-actions">
@@ -141,6 +149,10 @@
         </div>
       </div>
     </div>
+    </div>
+    <!-- /右列 -->
+    </div>
+    <!-- /主体 -->
 
     <!-- 成本明细弹窗 → 完整报价明细打印单 -->
     <div v-if="showCostDetail" class="modal-overlay" @click="showCostDetail = false">
@@ -482,7 +494,7 @@ interface Props {
   result: LiandanQuoteResponse
   loading?: boolean
   spec?: QuoteSpec
-  formData?: { sheet_count?: number; binding_position?: string | null; numbering_start?: number | null }
+  formData?: { sheet_count?: number; pages_per_book?: number; binding_position?: string | null; numbering_start?: number | null }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -532,6 +544,25 @@ const BINDING_POS_LABELS: Record<string, string> = { top: '上订', left: '左�
 const bindingPos = computed(() => props.formData?.binding_position || null)
 const bindingPosLabel = computed(() => bindingPos.value ? (BINDING_POS_LABELS[bindingPos.value] || bindingPos.value) : '')
 const numberingStart = computed(() => props.formData?.numbering_start ?? null)
+
+// 报价ID：由后端注入
+const quoteId = computed(() => props.result.quote_id || '—')
+
+// 数量摘要：每本页数 + 本数（与参考站一致，如「99页/本、100本」）
+const quantityLabel = computed(() => {
+  const pages = props.formData?.pages_per_book
+  const qty = props.result.quantity
+  return pages ? `${pages}页/本、${qty}本` : `${qty}本`
+})
+
+// 印后工艺摘要：装订工序带上装订位置（如「装订(左订)」）
+const processingLabel = computed(() => {
+  const base = props.spec?.processing || '无'
+  if (bindingPosLabel.value && base.includes('装订')) {
+    return base.replace('装订', `装订(${bindingPosLabel.value})`)
+  }
+  return base
+})
 
 const postItemsText = computed(() => {
   const items = props.result.post_processing_items
@@ -613,68 +644,112 @@ const handleCopy = () => {
 .currency-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
+  gap: 6px;
   margin-bottom: var(--spacing-md);
 }
 
 .currency-btn {
-  padding: var(--spacing-xs) var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  background: white;
-  color: var(--text-secondary);
+  padding: 4px 10px;
+  border: 1px solid #a8c6e8;
+  border-radius: 3px;
+  background: #f5f9fe;
+  color: #4a6b8a;
   font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.currency-btn.active,
+.currency-btn.active {
+  color: #c0392b;
+  border-color: #c0392b;
+  background: #fff;
+  font-weight: 600;
+}
+
 .currency-btn:hover {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+/* 客户类型 + 导出链接同一行 */
+.toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .customer-types {
   display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  gap: 6px;
 }
 
 .type-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
+  background: #f5f9fe;
+  border: 1px solid #a8c6e8;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  color: #4a6b8a;
   font-size: var(--font-size-sm);
   cursor: pointer;
-  padding: var(--spacing-xs) 0;
-  border-bottom: 2px solid transparent;
+  padding: 6px 14px;
   transition: all 0.2s;
 }
 
 .type-btn.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+  color: #c0392b;
+  background: #fff;
+  font-weight: 600;
 }
 
 .export-actions {
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .export-link {
-  color: var(--primary-color);
+  color: #2c6bbd;
   text-decoration: none;
   font-size: var(--font-size-sm);
   cursor: pointer;
+  padding: 4px 10px;
+  border: 1px solid #a8c6e8;
+  border-radius: 3px;
+  background: #f5f9fe;
 }
 
 .export-link:hover {
-  text-decoration: underline;
+  border-color: #2c6bbd;
+  background: #fff;
+}
+
+/* 主体两列布局（对齐参考站：左价表+信息、右成本摘要） */
+.result-body {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid #a8c6e8;
+  background: #eaf3fd;
+}
+
+.result-left {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  border-right: 1px solid #a8c6e8;
+}
+
+.result-right {
+  flex: 0 0 340px;
+  max-width: 340px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .price-table-container {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .price-table {
@@ -684,29 +759,29 @@ const handleCopy = () => {
 }
 
 .price-table thead {
-  background: var(--table-header-bg);
-  color: var(--table-header-text);
+  background: #d3e6fb;
+  color: #1a3a5c;
 }
 
 .price-table th,
 .price-table td {
-  padding: var(--spacing-md);
-  text-align: left;
-  border: 1px solid var(--table-border);
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid #a8c6e8;
+  font-size: 13px;
 }
 
 .price-table th {
   font-weight: 600;
 }
 
-.price-table tbody tr:hover {
-  background: var(--table-hover);
+.price-table tbody tr:first-child td {
+  color: #d33;
+  font-weight: 700;
 }
 
-.price-table td:nth-child(2),
-.price-table td:nth-child(3) {
-  text-align: right;
-  font-family: var(--font-mono);
+.price-table tbody tr:hover {
+  background: #f5faff;
 }
 
 .table-footer {
@@ -764,9 +839,10 @@ const handleCopy = () => {
 }
 
 .company-info {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0;
   padding: var(--spacing-md);
-  background: var(--bg-gray);
+  background: #eaf3fd;
+  border: 1px solid #a8c6e8;
   border-radius: var(--border-radius-sm);
 }
 
@@ -814,14 +890,17 @@ const handleCopy = () => {
 
 .cost-summary {
   padding: var(--spacing-md);
-  background: var(--bg-gray);
+  background: #eaf3fd;
+  border: 1px solid #a8c6e8;
   border-radius: var(--border-radius-sm);
+  height: 100%;
 }
 
 .summary-title {
   font-weight: 600;
   margin-bottom: var(--spacing-md);
-  color: var(--text-primary);
+  color: #c0392b;
+  text-align: center;
 }
 
 .summary-content p {
