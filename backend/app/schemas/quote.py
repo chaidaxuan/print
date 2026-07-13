@@ -17,6 +17,8 @@ class LiandanQuoteRequest(BaseModel):
     profit_rate: Optional[float] = Field(None, description="自填利润率(小数，如0.6)")
     customer_name: Optional[str] = Field(None, description="客户名称")
     product_name: Optional[str] = Field(None, description="产品名称")
+    binding_position: Optional[str] = Field(None, description="装订位置: top/left/right")
+    numbering_start: Optional[int] = Field(None, description="打码起始号")
 
 
 class CostBreakdown(BaseModel):

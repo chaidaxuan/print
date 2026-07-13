@@ -173,7 +173,10 @@
               <td colspan="4">单 双 面：—</td>
             </tr>
             <tr>
-              <td>其它参数：联数({{ formData.sheet_count || 1 }})</td>
+              <td>其它参数：联数({{ formData.sheet_count || 1 }})
+                <span v-if="bindingPos">・装订位置({{ bindingPosLabel }})</span>
+                <span v-if="numberingStart != null">・打码起始号({{ numberingStart }})</span>
+              </td>
               <td colspan="4">后道工序：{{ spec?.processing || '无' }}</td>
             </tr>
           </table>
@@ -479,6 +482,7 @@ interface Props {
   result: LiandanQuoteResponse
   loading?: boolean
   spec?: QuoteSpec
+  formData?: { sheet_count?: number; binding_position?: string | null; numbering_start?: number | null }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -523,7 +527,11 @@ const mi = computed(() => props.result.machine_info)
 const trace = computed(() => props.result.calc_trace)
 const imp = computed(() => trace.value?.imposition)
 const paperDetail = computed(() => props.result.paper_layer_detail)
-const formData = computed(() => ({ sheet_count: 3 })) // 临时兼容,待父组件传入
+
+const BINDING_POS_LABELS: Record<string, string> = { top: '上订', left: '左订', right: '右订' }
+const bindingPos = computed(() => props.formData?.binding_position || null)
+const bindingPosLabel = computed(() => bindingPos.value ? (BINDING_POS_LABELS[bindingPos.value] || bindingPos.value) : '')
+const numberingStart = computed(() => props.formData?.numbering_start ?? null)
 
 const postItemsText = computed(() => {
   const items = props.result.post_processing_items

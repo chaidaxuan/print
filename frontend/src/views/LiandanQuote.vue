@@ -53,6 +53,7 @@
         :result="quoteResult"
         :spec="quoteSpec"
         :loading="loading"
+        :form-data="formData"
       />
       <div v-else class="no-result">
         <p>请填写上方表单并点击"自助报价"按钮，结果将显示在此处</p>
@@ -108,7 +109,9 @@ const formData = ref<LiandanQuoteRequest>({
   gram_weight: 50,
   post_processing: ['binding'],
   customer_name: '',
-  product_name: ''
+  product_name: '',
+  binding_position: 'top',
+  numbering_start: null
 })
 
 const quoteResult = ref<LiandanQuoteResponse | null>(null)
@@ -125,8 +128,12 @@ const processingLabels: Record<string, string> = {
   add_cover: '加封面',
   print_cover: '印封面',
   creasing: '压痕压点线',
+  dot_line: '压点线',
   numbering: '彩色联单加号码',
-  edge_words: '换边联字'
+  edge_words: '换边联字',
+  backing_board: '加垫板',
+  side_union_same: '侧边联统一',
+  side_union_diff: '侧边联不统一'
 }
 
 const buildSpec = (data: LiandanQuoteRequest): QuoteSpec => {

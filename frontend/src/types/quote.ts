@@ -33,6 +33,8 @@ export interface LiandanQuoteRequest {
   profit_rate?: number | null
   customer_name?: string
   product_name?: string
+  binding_position?: string | null
+  numbering_start?: number | null
 }
 
 export interface CostBreakdown {

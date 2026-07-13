@@ -156,6 +156,27 @@
                       </label>
                     </td>
                   </tr>
+                  <!-- 装订位置子选项 -->
+                  <tr v-if="localData.post_processing.includes('binding')">
+                    <td></td>
+                    <td>
+                      <div class="sub-option">
+                        <span class="sub-label">装订位置：</span>
+                        <label class="checkbox-label">
+                          <input type="radio" value="top" v-model="localData.binding_position" />
+                          上订
+                        </label>
+                        <label class="checkbox-label">
+                          <input type="radio" value="left" v-model="localData.binding_position" />
+                          左订
+                        </label>
+                        <label class="checkbox-label">
+                          <input type="radio" value="right" v-model="localData.binding_position" />
+                          右订
+                        </label>
+                      </div>
+                    </td>
+                  </tr>
                   <tr>
                     <td>
                       <label class="checkbox-label">
@@ -170,6 +191,22 @@
                       </label>
                     </td>
                   </tr>
+                  <!-- 打码起始号子输入 -->
+                  <tr v-if="localData.post_processing.includes('numbering')">
+                    <td></td>
+                    <td>
+                      <div class="sub-option">
+                        <span class="sub-label">打码起始号：</span>
+                        <input
+                          type="number"
+                          v-model.number="localData.numbering_start"
+                          class="form-input small"
+                          placeholder="如 000001"
+                          min="0"
+                        />
+                      </div>
+                    </td>
+                  </tr>
                   <tr>
                     <td>
                       <label class="checkbox-label">
@@ -179,22 +216,50 @@
                     </td>
                     <td>
                       <label class="checkbox-label">
-                        <input type="checkbox" value="add_cover" v-model="localData.post_processing" />
-                        加封面
+                        <input type="checkbox" value="dot_line" v-model="localData.post_processing" />
+                        压点线
                       </label>
                     </td>
                   </tr>
                   <tr>
                     <td>
                       <label class="checkbox-label">
+                        <input type="checkbox" value="add_cover" v-model="localData.post_processing" />
+                        加封面
+                      </label>
+                    </td>
+                    <td>
+                      <label class="checkbox-label">
                         <input type="checkbox" value="print_cover" v-model="localData.post_processing" />
                         印封面
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <label class="checkbox-label">
+                        <input type="checkbox" value="backing_board" v-model="localData.post_processing" />
+                        加垫板
                       </label>
                     </td>
                     <td>
                       <label class="checkbox-label">
                         <input type="checkbox" value="edge_words" v-model="localData.post_processing" />
                         换边联字
+                      </label>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <label class="checkbox-label">
+                        <input type="checkbox" value="side_union_same" v-model="localData.post_processing" />
+                        侧边联统一
+                      </label>
+                    </td>
+                    <td>
+                      <label class="checkbox-label">
+                        <input type="checkbox" value="side_union_diff" v-model="localData.post_processing" />
+                        侧边联不统一
                       </label>
                     </td>
                   </tr>
@@ -477,6 +542,23 @@ onMounted(async () => {
 .processing-table td {
   padding: var(--spacing-xs) 0;
   vertical-align: top;
+}
+
+.sub-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 4px 0 4px 8px;
+  margin-left: 4px;
+  border-left: 3px solid var(--primary-color);
+  background: #f8f9ff;
+  border-radius: 0 4px 4px 0;
+}
+
+.sub-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .form-actions {
