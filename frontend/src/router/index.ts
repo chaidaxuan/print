@@ -20,6 +20,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LiandanParams.vue'),
     meta: { title: '专版联单设置' }
   },
+  {
+    path: '/quote/huace',
+    name: 'huace',
+    component: () => import('@/views/HuaceQuote.vue'),
+    meta: { title: '专版画册报价' }
+  },
   // 兼容旧入口：/quote 直接跳到联单
   {
     path: '/quote',

@@ -8,6 +8,11 @@ from app.models.color import PrintingColor
 from app.models.param import SystemParam
 from app.models.quote import QuoteRecord
 from app.models.cost_addon_tier import CostAddonTier
+from app.models.huace_paper import HuacePaperPrice
+from app.models.huace_color import HuaceColorPrice
+from app.models.huace_binding import HuaceBinding
+from app.models.huace_post_processing import HuacePostProcessing
+from app.models.huace_client_tier import HuaceClientTier
 
 __all__ = [
     "ProductCategory",
@@ -20,4 +25,9 @@ __all__ = [
     "SystemParam",
     "QuoteRecord",
     "CostAddonTier",
+    "HuacePaperPrice",
+    "HuaceColorPrice",
+    "HuaceBinding",
+    "HuacePostProcessing",
+    "HuaceClientTier",
 ]

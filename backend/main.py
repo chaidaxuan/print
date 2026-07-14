@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import quote
+from app.routers import huace
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -20,6 +21,7 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(quote.router)
+app.include_router(huace.router)
 
 
 @app.get("/")

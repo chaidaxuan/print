@@ -45,7 +45,7 @@ const products: Product[] = [
   { label: '特价不干胶', code: 'tj-buganjiao', img: '/products/107.jpg', enabled: false },
   { label: '精品盒', code: 'jingpin', img: '/products/17.jpg', enabled: false },
   { label: '特价精品盒', code: 'tj-jingpin', img: '/products/121.jpg', enabled: false },
-  { label: '专版画册', code: 'huace', img: '/products/2.jpg', enabled: false },
+  { label: '专版画册', code: 'huace', img: '/products/2.jpg', enabled: true, path: '/quote/huace' },
   { label: '特价单张', code: 'danzhang', img: '/products/101.jpg', enabled: false },
   { label: '特价画册', code: 'tj-huace', img: '/products/108.jpg', enabled: false },
   { label: '信封', code: 'xinfeng', img: '/products/15.jpg', enabled: false },
